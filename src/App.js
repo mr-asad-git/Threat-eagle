@@ -19,13 +19,13 @@ function App() {
         <Route
           path="/"
           element={
-            <div className="min-h-screen bg-black text-white pt-24 px-6">
-              <div className="text-center mb-10">
-                <h1 style={{ fontFamily: 'Saira Stencil One' }} className="text-8xl font-normal text-yellow-300 neon-text mb-4">
+            <div className="min-h-screen bg-black  text-white pt-40 px-6">
+              <div className="text-center">
+                <h1 style={{ fontFamily: 'Saira Stencil One' }} className="text-7xl font-normal text-yellow-400 neon-text mb-4 animate-pulse">
                   Threat Eagle
                 </h1>
-                <p className="text-grey-100 font-serif text-lg max-w-2xl mx-auto">
-                  Your intelligent cybersecurity companion. Scan URLs, code snippets, and files for vulnerabilities with precision and speed.
+                <p className="text-grey-100 font-serif text-gray-400 text-md max-w-2xl mx-auto">
+                  Threat Eagle is an innovative cybersecurity platform integrating intelligent scanning across networks, files, source code, and web applications — delivering comprehensive vulnerability assessments and proactive threat intelligence
                 </p>
               </div>
               <HeroCard />
