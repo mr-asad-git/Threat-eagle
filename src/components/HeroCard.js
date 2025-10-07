@@ -32,7 +32,7 @@ const glitchVariants = {
 };
 
 const InputSelector = () => {
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState(inputOptions[0]);
 
   const handleSelect = (option) => {
     if (selected?.type === option.type) {
@@ -43,60 +43,77 @@ const InputSelector = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-12 text-yellow-300">
-      {/* Option Buttons */}
-      <div className="flex justify-center gap-6 mb-6">
-        {inputOptions.map((option) => (
-          <button
-            key={option.type}
-            onClick={() => handleSelect(option)}
-            className={`px-6 py-2 rounded-full border transition duration-300 ease-in-out font-semibold
-              ${
-                selected?.type === option.type
-                  ? 'bg-black border-yellow-400 text-yellow-300 shadow-[0_0_10px_#ff0]'
-                  : 'bg-black border-gray-600 text-gray-400 hover:border-yellow-400 hover:text-yellow-300'
-              }`}
-          >
-            {option.type}
-          </button>
-        ))}
-      </div>
-
-      {/* Input Field with Glitch Transition */}
-      <div className="relative min-h-[180px]">
-        <AnimatePresence mode="wait">
-          {selected && (
-            <motion.div
-              key={selected.type}
-              variants={glitchVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="absolute w-full"
+    <div className="max-w-2xl mx-auto  text-yellow-300">
+      <div className=" rounded-3xl shadow-2xl p-8 ">
+        {/* Option Buttons */}
+        <div className="flex justify-center gap-4  mb-8">
+          {inputOptions.map((option) => (
+            <button
+              key={option.type}
+              onClick={() => handleSelect(option)}
+              className={`px-5 py-1 rounded-full border-2 font-semibold text-sm tracking-wide transition-all duration-300 ease-in-out shadow-lg focus:outline-none relative overflow-hidden
+                ${
+                  selected?.type === option.type
+                    ? 'bg-yellow-400 text-black border-yellow-400 shadow-yellow-400/40 scale-105'
+                    : 'bg-black/80 text-yellow-300 border-yellow-700 hover:bg-yellow-400 hover:text-black hover:border-yellow-400 hover:scale-105'
+                }`}
             >
-              {selected.type === 'File' ? (
-                <label
-                    htmlFor="file-upload"
-                    className="block w-full p-4 bg-black text-yellow-300 border border-yellow-500 rounded-lg cursor-pointer
-                      shadow-[0_0_5px_#ff0] hover:shadow-[0_0_15px_#ff0] transition-all duration-300 ease-in-out
-                      hover:text-yellow-100 hover:border-yellow-300"
-                  >
-                    📁 Choose a file to scan
-                    <input
-                      id="file-upload"
-                      type="file"
-                      className="hidden"
-                    />
-                  </label>
-              ) : (
-                <textarea
-                  placeholder={selected.placeholder}
-                  className="w-full h-40 p-4 bg-black text-yellow-300 border border-yellow-500 rounded-lg resize-none"
-                />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {option.type}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative min-h-[80px]">
+          <AnimatePresence mode="wait">
+            {selected && (
+              <motion.div
+                key={selected.type}
+                variants={glitchVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="absolute w-full"
+              >
+        <form className={`${selected?.type === 'Code' ? 'flex flex-col gap-2 w-full' : 'flex items-center gap-2 w-full'}`}>
+          {selected.type === 'File' ? (
+                      <label
+                        htmlFor="file-upload"
+                        className="flex items-center w-full h-10 p-2 text-yellow-400 border-2 border-transparent rounded-xl cursor-pointer shadow-lg bg-yellow-600 backdrop-blur-md transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-yellow-400"
+                      >
+                        <span className="truncate flex-1 text-center font-semibold tracking-wide text-yellow-200 drop-shadow">Choose a file to scan</span>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          className="hidden"
+                        />
+                      </label>
+                    ) : selected.type === 'Code' ? (
+                      <>
+                        <textarea
+                          placeholder={selected.placeholder}
+                          className="w-full h-32 p-2  text-yellow-300 border-2 border-yellow-400 rounded-xl shadow-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-400 transition-all duration-300 bg-transparent resize-none"
+                        />
+                        <button type="submit" className="mt-2 w-full px-3 py-2 rounded-md bg-yellow-400 text-black font-bold text-xs shadow-lg transition-all duration-300 border-2 border-yellow-400 hover:border-yellow-500 focus:outline-none">
+                          Scan
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <input
+                          type="text"
+                          placeholder={selected.placeholder}
+                          className="w-full h-10 p-2 text-yellow-300 border-2 border-yellow-400 rounded-xl  focus:border-yellow-500 focus:ring-2 focus:ring-yellow-400 transition-all duration-300 bg-transparent"
+                        />
+                        <button type="submit" className="px-3 py-2 rounded-md bg-yellow-400 text-black font-bold text-xs shadow-lg transition-all duration-300 border-2 border-yellow-400 hover:border-yellow-500 focus:outline-none">
+                          Scan
+                        </button>
+                      </>
+                    )}
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
