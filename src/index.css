@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* index.css */
+nav{
+    box-shadow: 0 10px 20px #0ff;
+}
+
+.neon-link {
+  text-shadow: 0 0 3px #0ff;
+}
+
+.neon-link:hover {
+  text-shadow: 0 0 5px rgb(109, 248, 255), 0 0 10px rgb(255, 255, 255);
+}
+

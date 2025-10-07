@@ -1,0 +1,112 @@
+
+/* Glowing shield animation */
+@keyframes shieldGlow {
+  0% { box-shadow: 0 0 10px #facc15; }
+  50% { box-shadow: 0 0 30px #facc15; }
+  100% { box-shadow: 0 0 10px #facc15; }
+}
+
+.shield-core {
+  animation: shieldGlow 2.5s ease-in-out infinite;
+}
+
+/* Node container */
+.tech-node {
+  width: 200px;
+  height: 200px;
+  pointer-events: none;
+}
+
+/* Node icon */
+.node-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1f1f1f;
+  border: 2px solid #facc15;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  color: #facc15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.node-icon.active {
+  background-color: #facc15;
+  color: #0a0a0a;
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 0 0 20px #facc15;
+}
+
+/* Tooltip styles */
+.node-tooltip-left,
+.node-tooltip-right {
+  position: absolute;
+  top: 60px;
+  background-color: #1f1f1f;
+  color: #facc15;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.node-tooltip-left {
+  left: 60px;
+}
+
+.node-tooltip-right {
+  right: 60px;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* SVG path styling */
+.node-path {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+/* Highlights Tree */
+@media (min-width: 768px) {
+  .rotate-\[10deg\] {
+    transform: rotate(10deg);
+  }
+  .-rotate-\[8deg\] {
+    transform: rotate(-8deg);
+  }
+}
+/* Highlights Tree Branches */
+.right-branch {
+  left: calc(50% + 40px);
+}
+
+.left-branch {
+  right: calc(50% + 40px);
+}
+
+@media (max-width: 768px) {
+  .right-branch,
+  .left-branch {
+    position: static;
+    margin-top: 12px;
+  }
+}
