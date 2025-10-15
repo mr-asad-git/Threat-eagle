@@ -53,7 +53,7 @@ export default function ScanPage() {
 
       {/* Scan Module */}
       <div className="flex justify-center mb-10">
-        <div className="bg-gray-900 border border-yellow-500 rounded-xl p-6 w-[672px] text-center shadow-lg">
+        <div className="bg-gray-900  rounded-xl p-6 w-[672px] text-center shadow-lg">
           {/* Connected Buttons Row */}
           <div className="flex justify-between mb-4">
             {['URL', 'Code', 'File'].map((type) => (
@@ -75,17 +75,18 @@ export default function ScanPage() {
           <div className="mt-2">
             {activeType === 'File' ? (
               <input
-                type="file"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file && file.size < 5000) {
-                    setInputValue(file.name);
-                  } else {
-                    alert('File must be under 5KB');
-                  }
-                }}
-                className="w-full bg-gray-900 text-yellow-300 border border-yellow-500 px-4 py-2 rounded-lg"
-              />
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file && file.size < 5000) {
+                  setInputValue(file.name);
+                } else {
+                  alert('File must be under 5KB');
+                }
+              }}
+              className="w-full bg-[#0f0f0f] text-yellow-300 px-6 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all"
+            />
+
             ) : (
               <textarea
                 rows={3}
@@ -99,18 +100,19 @@ export default function ScanPage() {
 
           {/* Scan Button */}
           <button
-            onClick={handleScan}
-            className="mt-4 w-full bg-yellow-400 text-black font-bold px-6 py-2 rounded-3xl shadow-[0_0_10px_#ff0] hover:bg-yellow-500 hover:shadow-[0_0_20px_#ff0] transition-all duration-300"
-          >
-            🚀 Start Scan
-          </button>
+          onClick={handleScan}
+          className="mt-6 w-full bg-yellow-400 text-black font-bold px-6 py-3 rounded-xl shadow-[0_0_15px_#facc15] hover:bg-yellow-500 hover:shadow-[0_0_25px_#facc15] transition-all duration-300"
+        >
+          🚀 Start Scan
+        </button>
+
         </div>
       </div>
 
       {/* Loader Feedback */}
       {isLoading && (
         <div className="flex justify-center mb-10">
-          <div className="bg-gray-900 border border-yellow-500 rounded-xl p-6 w-[672px] text-center text-yellow-300 font-semibold animate-fade-step">
+          <div className="bg-[#1a1a1a] rounded-2xl p-6 w-full max-w-2xl text-center shadow-[0_0_20px_#facc15]">
             {scanSteps.length > 0 && scanSteps[scanSteps.length - 1]}
           </div>
         </div>

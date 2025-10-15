@@ -3,12 +3,15 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HeroCard from './components/HeroCard';
 import Header from './components/Header';
-import GraphGrid from './components/GraphGrid';
+import FeatureGrid from './components/FeatureGrid';
 import TrialPage from './pages/TrialPage/TrialPage';
 import ScanPage from './pages/ScanPage/ScanPage';
 import AboutPage from './pages/AboutPage/AboutPage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import SignUpPage from './pages/SignUpPage/SignUpPage';
+import ContactPage from './pages/ContactPage/ContactPage';
+import Footer from './components/Footer';
+import FloatingButtons from './components/FloatingButtons';
 
 function App() {
   return (
@@ -29,7 +32,9 @@ function App() {
                 </p>
               </div>
               <HeroCard />
-              <GraphGrid />
+              <FeatureGrid />
+              <Footer />
+              
             </div>
           }
         />
@@ -41,6 +46,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage/>} />
         <Route path="/signup" element={<SignUpPage/>} />
+        <Route path="/contact" element={<ContactPage/>} />
       </Routes>
     </Router>
   );

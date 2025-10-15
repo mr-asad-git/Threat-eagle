@@ -2,7 +2,7 @@
 import React from 'react';
 // import { Brain, Zap, Search } from 'lucide-react';
 
-const GraphGrid = () => {
+const FeatureGrid = () => {
   return (
     <div className="mt-16 p-6 bg-black text-yellow-300">
       <h2 className="text-5xl font-bold text-yellow-400 mb-10 text-center tracking-wide">Product Features</h2>
@@ -29,8 +29,38 @@ const GraphGrid = () => {
           <p className="relative z-10 text-yellow-200 text-justify text-base font-medium">Connects the dots between detected vulnerabilities, indicators of compromise, and known attack patterns using data from sources like NVD and MITRE ATT&CK, enabling smarter prioritization and proactive defense.</p>
         </div>
       </div>
+      
+      <div className="mt-8 px-6 py-12 bg-[#0a0a0a] text-yellow-300">
+  <h2 className="text-4xl font-bold text-center mb-20 ">Technologies Used</h2>
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
+    {[
+      'React',
+      'Tailwind CSS',
+      'Node.js',
+      'Express',
+      'MongoDB',
+      'Recharts',
+      'JWT',
+      'Axios',
+      'Framer Motion',
+      'React Router',
+      'Git',
+      'Vite',
+      'ESLint',
+      'Prettier',
+      'PostCSS',
+    ].map((tech, index) => (
+      <button
+        key={index}
+        className="bg-gray-900 text-yellow-300 py-4 px-6 rounded-xl shadow-md hover:bg-yellow-500 hover:text-black transition-all duration-300 font-semibold text-lg"
+      >
+        {tech}
+      </button>
+    ))}
+  </div>
+</div>
     </div>
   );
 };
 
-export default GraphGrid;
+export default FeatureGrid;
