@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Header from '../../components/Header';
 import './AboutPageStyling.css';
+import Footer from '../../components/Footer';
 
 export default function AboutPage() {
   const [hoveredTech, setHoveredTech] = useState(null);
@@ -135,6 +136,7 @@ export default function AboutPage() {
     })}
   </div>
 </div>
+<Footer />
     </div>
   );
 }

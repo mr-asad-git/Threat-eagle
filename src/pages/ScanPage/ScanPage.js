@@ -1,3 +1,4 @@
+import Footer from '../../components/Footer';
 import React, { useState } from 'react';
 import Header from '../../components/Header';
 import './ScanPageStyling.css';
@@ -42,7 +43,7 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="bg-[#0a0a0a] pb-[2rem] min-h-screen text-yellow-300 pt-24 px-8">
+    <div className="bg-[#0a0a0a] pb-[2rem] min-h-screen text-yellow-300 pt-24 px-8 h-[100vh]">
       <Header />
       <div className="text-center mb-10">
         <h2 style={{ fontFamily: 'Saira Stencil One' }} className="text-6xl font-bold mb-2">🧪 Threat Scanner</h2>
@@ -127,7 +128,7 @@ export default function ScanPage() {
           </div>
         </div>
       )}
-
+      <Footer />
     </div>
   );
 }

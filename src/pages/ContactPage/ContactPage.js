@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Header from '../../components/Header';
 import './ContactPageStyling.css';
+import Footer from '../../components/Footer';
 
 export default function ContactPage() {
   const [showPopup, setShowPopup] = useState(false);
@@ -105,6 +106,7 @@ export default function ContactPage() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

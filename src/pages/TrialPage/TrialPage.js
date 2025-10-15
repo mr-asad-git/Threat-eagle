@@ -1,5 +1,6 @@
 // TrialPage.jsx
 import React, { useState } from 'react';
+import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import './TrialPageStyling.css';
 
@@ -108,6 +109,7 @@ export default function TrialPage() {
           </table>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

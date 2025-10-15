@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import Footer from '../../components/Footer';
 
 export default function LoginPage() {
   const location = useLocation();

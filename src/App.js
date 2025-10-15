@@ -11,7 +11,6 @@ import LoginPage from './pages/LoginPage/LoginPage';
 import SignUpPage from './pages/SignUpPage/SignUpPage';
 import ContactPage from './pages/ContactPage/ContactPage';
 import Footer from './components/Footer';
-import FloatingButtons from './components/FloatingButtons';
 
 function App() {
   return (
