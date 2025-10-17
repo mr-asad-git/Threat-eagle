@@ -1,0 +1,12 @@
+@keyframes progressLine {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-progress-line {
+  animation: progressLine 3s linear forwards;
+}
