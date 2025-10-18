@@ -1,4 +1,6 @@
 import { useState } from 'react';
+// eslint-disable-next-line
+import { Link, useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { FaExclamationCircle, FaCheckCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 
@@ -15,11 +17,17 @@ export default function SignUpPage() {
   const passwordsMatch = password === confirm && password.length > 0;
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-    if (!passwordsMatch) return;
-    navigate('/login', { state: { role } });
-  };
+  e.preventDefault();
+  setSubmitted(true);
+  if (!passwordsMatch) return;
+
+  // Save user data to localStorage
+  const userData = { email, password, role };
+  localStorage.setItem('threatUser', JSON.stringify(userData));
+
+  // Redirect to login
+  navigate('/login');
+};
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-6">
@@ -113,6 +121,16 @@ export default function SignUpPage() {
         >
           Sign Up
         </button>
+        {/* Login Link */}
+        <p className="text-white mt-3">
+          Already have an account?
+          <Link
+            to="/login"
+            className="text-yellow-500 ml-2 hover:border-b-2 hover:border-yellow-500 cursor-pointer"
+          >
+            Log In
+          </Link>
+        </p>
       </form>
     </div>
   );

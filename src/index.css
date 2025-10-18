@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+.bg-img{
+background-image: url('./assets/hero-background-img.jpg'); /* ✅ */
+}
 /* index.css */
 nav{
     box-shadow: 0 10px 20px #0ff;
@@ -15,3 +18,15 @@ nav{
   text-shadow: 0 0 5px rgb(109, 248, 255), 0 0 10px rgb(255, 255, 255);
 }
 
+@keyframes progressLine {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-progress-line {
+  animation: progressLine 3s linear forwards;
+}

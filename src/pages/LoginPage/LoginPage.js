@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import './LoginPageStyling.css';
+// import Footer from '../../components/Footer';
 
 export default function LoginPage() {
   const location = useLocation();
@@ -9,18 +11,36 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(initialRole);
+  const [showPopup, setShowPopup] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const storedUser = JSON.parse(localStorage.getItem('threatUser'));
+
+    if (
+      storedUser &&
+      storedUser.email === email &&
+      storedUser.password === password &&
+      storedUser.role === role
+    ) {
+      setShowPopup(true);
+      setError('');
+      setTimeout(() => setShowPopup(false), 3000);
+    } else {
+      setError('Invalid credentials. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-6">
-      <div className="bg-gray-900 border border-yellow-500 rounded-xl p-8 w-full max-w-md shadow-lg">
+      <form
+        onSubmit={handleLogin}
+        className="bg-gray-900 border border-yellow-500 rounded-xl p-8 w-full max-w-md shadow-lg"
+      >
         <h2 className="text-3xl font-bold text-yellow-400 mb-6 text-center tracking-widest">
           Login
         </h2>
-
-        {/* Role Display
-        <p className="text-yellow-300 text-center mb-4">
-          Logging in as: <span className="font-bold">{role}</span>
-        </p> */}
 
         {/* Email Input */}
         <label className="block text-yellow-300 font-semibold mb-2">Email</label>
@@ -62,6 +82,9 @@ export default function LoginPage() {
           <option value="Admin">Admin</option>
         </select>
 
+        {/* Error Message */}
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
         {/* Login Button */}
         <button
           type="submit"
@@ -80,7 +103,18 @@ export default function LoginPage() {
             Sign Up
           </Link>
         </p>
-      </div>
+      </form>
+
+      {/* Success Popup */}
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-[#0f0f0f] border border-green-500 rounded-xl px-8 py-6 text-green-300 shadow-[0_0_30px_#22c55e] text-center relative w-[300px]">
+            <div className="text-4xl mb-2">✅</div>
+            <p className="font-semibold">Logged in successfully!</p>
+            <div className="absolute bottom-0 left-0 h-[4px] bg-green-500 animate-progress-line w-full"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
