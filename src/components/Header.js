@@ -13,7 +13,7 @@ export default function Header() {
         </h1>
       </div>
   <ul className="flex flex-wrap justify-center md:justify-end space-x-1 md:space-x-4 bg-black/40 rounded-2xl px-2 py-1 shadow-md text-sm w-full md:w-auto">
-        {['Home', 'Scan', 'Trial', 'About','Contact', 'Login'].map((item) => {
+        {['Home', 'Trial', 'About','Contact', 'Login'].map((item) => {
           const path = item === 'Home' ? '/' : `/${item.toLowerCase()}`;
           const isActive = location.pathname === path;
 
@@ -68,3 +68,5 @@ export default function Header() {
     </nav>
   );
 }
+
+

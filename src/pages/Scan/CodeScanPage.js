@@ -101,19 +101,17 @@ useEffect(() => {
           >
             ←
           </button>
-          <div className="text-2xl font-extrabold text-yellow-400 tracking-wider">Threat Eagle</div>
+          {/* <div className="text-2xl font-extrabold text-yellow-400 tracking-wider">Threat Eagle</div> */}
           <select
             className="bg-black border border-yellow-500 text-yellow-300 px-3 py-1 rounded-md text-sm focus:outline-none"
             onChange={(e) => {
               const type = e.target.value;
-              if (type === 'url') navigate('/scan/url');
-              if (type === 'code') navigate('/scan/code');
+              if (type === 'url') navigate('/results/url');
               if (type === 'file') navigate('/scan/file');
             }}
           >
             <option value="">Scan another...</option>
             <option value="url">URL</option>
-            <option value="code">Code</option>
             <option value="file">File</option>
           </select>
         </div>

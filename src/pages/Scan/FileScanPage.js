@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function FileScanPage() {
+  const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [fileInfo, setFileInfo] = useState(null);
@@ -77,7 +78,35 @@ export default function FileScanPage() {
   };
 
   return (
-    <div className="min-h-screen px-6 pt-40 py-10 bg-black text-yellow-300 font-mono">
+
+    
+    <div className="min-h-screen px-6 pt-10 py-10 bg-black text-yellow-300 font-mono">
+
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b border-yellow-700 bg-black/80 backdrop-blur-md shadow-md">
+        <div className="flex items-center pt-20 gap-4">
+          <button
+            onClick={() => navigate('/')}
+            className="text-yellow-400 hover:text-yellow-300 transition-transform transform hover:scale-110"
+            title="Go Back"
+          >
+            ←
+          </button>
+          <select
+            className="bg-black border border-yellow-500 text-yellow-300 px-3 py-1 rounded-md text-sm focus:outline-none"
+            onChange={(e) => {
+              const type = e.target.value;
+              if (type === 'url') navigate('/results/url');
+              if (type === 'code') navigate('/scan/code');
+            }}
+          >
+            <option value="">Scan another...</option>
+            <option value="url">URL</option>
+            <option value="code">Code</option>
+          </select>
+        </div>
+      </header>
+
       <div className="max-w-5xl mx-auto">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 tracking-wider border-b-2 border-yellow-500 pb-2">
           🧾 FILE SCAN DASHBOARD

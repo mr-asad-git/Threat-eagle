@@ -2,15 +2,30 @@ import React, { useState } from 'react';
 import Header from '../../components/Header';
 import './ContactPageStyling.css';
 import Footer from '../../components/Footer';
+import emailjs from '@emailjs/browser';
 
 export default function ContactPage() {
   const [showPopup, setShowPopup] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 3000);
-  };
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  emailjs
+    .sendForm(
+      'service_3jyc3i3',
+      'template_mu5rxkr',
+      e.target,
+      'qY3x1VmXKwl3-8qbS'
+    )
+    .then(() => {
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000);
+    })
+    .catch((error) => {
+      console.error('EmailJS error:', error);
+      alert(`❌ Failed to send message: ${error?.text || error?.message || 'Unknown error'}`);
+    });
+};
 
   return (
     <div className="bg-[#0a0a0a] min-h-screen text-yellow-300 pt-24 px-8 pb-20">

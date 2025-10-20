@@ -1,8 +1,7 @@
 import { useState } from 'react';
-// eslint-disable-next-line
-import { Link, useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaExclamationCircle, FaCheckCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { addUser } from '../../data/userStore';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -17,17 +16,14 @@ export default function SignUpPage() {
   const passwordsMatch = password === confirm && password.length > 0;
 
   const handleSubmit = (e) => {
-  e.preventDefault();
-  setSubmitted(true);
-  if (!passwordsMatch) return;
+    e.preventDefault();
+    setSubmitted(true);
+    if (!passwordsMatch) return;
 
-  // Save user data to localStorage
-  const userData = { email, password, role };
-  localStorage.setItem('threatUser', JSON.stringify(userData));
-
-  // Redirect to login
-  navigate('/login');
-};
+    const newUser = { email, password, role, name: email.split('@')[0] };
+    addUser(newUser);
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-6">
@@ -98,7 +94,6 @@ export default function SignUpPage() {
           )}
         </div>
 
-        {/* Error Message */}
         {submitted && !passwordsMatch && (
           <p className="text-red-500 text-sm mb-4">Passwords do not match</p>
         )}
@@ -121,7 +116,7 @@ export default function SignUpPage() {
         >
           Sign Up
         </button>
-        {/* Login Link */}
+
         <p className="text-white mt-3">
           Already have an account?
           <Link

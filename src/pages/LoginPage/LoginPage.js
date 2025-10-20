@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { findUser, getUserToken } from '../../data/userStore';
+import { validateUser } from '../../data/authUsers'
 import './LoginPageStyling.css';
-// import Footer from '../../components/Footer';
 
 export default function LoginPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const initialRole = location.state?.role || 'Customer';
 
   const [showPassword, setShowPassword] = useState(false);
@@ -14,21 +16,66 @@ export default function LoginPage() {
   const [showPopup, setShowPopup] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    const storedUser = JSON.parse(localStorage.getItem('threatUser'));
+  // Reset password states
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [generatedOTP, setGeneratedOTP] = useState('');
+  const [enteredOTP, setEnteredOTP] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetError, setResetError] = useState('');
 
-    if (
-      storedUser &&
-      storedUser.email === email &&
-      storedUser.password === password &&
-      storedUser.role === role
-    ) {
-      setShowPopup(true);
-      setError('');
-      setTimeout(() => setShowPopup(false), 3000);
+
+  
+const handleLogin = (e) => {
+  e.preventDefault();
+
+  const user = validateUser(email, password, role);
+
+  if (user && user.role === role) {
+    const token = getUserToken(user); // ✅ use helper
+    localStorage.setItem('authToken', token);
+
+    setShowPopup(true);
+    setError('');
+
+    setTimeout(() => {
+      setShowPopup(false);
+      navigate(user.role === 'Admin' ? '/admin/dashboard' : '/customer/dashboard');
+    }, 2000);
+  } else {
+    setError('Invalid credentials. Please try again.');
+  }
+};
+
+
+
+  const handleSendOTP = () => {
+    const user = findUser(resetEmail, '', role);
+    if (user) {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOTP(otp);
+      setOtpSent(true);
+      setResetError('');
+      alert(`🔐 Your OTP is: ${otp}`);
     } else {
-      setError('Invalid credentials. Please try again.');
+      setResetError('Email not found for selected role.');
+    }
+  };
+
+  const handleResetPassword = () => {
+    if (enteredOTP === generatedOTP) {
+      const users = JSON.parse(localStorage.getItem('threatUsers')) || [];
+      const updated = users.map((u) =>
+        u.email === resetEmail && u.role === role
+          ? { ...u, password: newPassword }
+          : u
+      );
+      localStorage.setItem('threatUsers', JSON.stringify(updated));
+      setShowReset(false);
+      alert('✅ Password updated. You can now log in.');
+    } else {
+      setResetError('Invalid OTP. Please try again.');
     }
   };
 
@@ -103,6 +150,14 @@ export default function LoginPage() {
             Sign Up
           </Link>
         </p>
+
+        {/* Forgot Password */}
+        <p
+          className="text-yellow-500 text-sm mt-4 text-center cursor-pointer hover:underline"
+          onClick={() => setShowReset(true)}
+        >
+          Forgot Password?
+        </p>
       </form>
 
       {/* Success Popup */}
@@ -112,6 +167,68 @@ export default function LoginPage() {
             <div className="text-4xl mb-2">✅</div>
             <p className="font-semibold">Logged in successfully!</p>
             <div className="absolute bottom-0 left-0 h-[4px] bg-green-500 animate-progress-line w-full"></div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Popup */}
+      {showReset && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80">
+          <div className="bg-gray-900 border border-yellow-500 rounded-xl p-6 w-[350px] text-yellow-300 relative">
+            <h3 className="text-xl font-bold mb-4">🔐 Reset Password</h3>
+
+            {!otpSent ? (
+              <>
+                <label className="block mb-2">Enter your email</label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full px-3 py-2 mb-4 rounded bg-black text-white border border-yellow-500"
+                  placeholder="you@example.com"
+                />
+                <button
+                  onClick={handleSendOTP}
+                  className="w-full bg-yellow-400 text-black font-bold py-2 rounded hover:bg-yellow-500"
+                >
+                  Send OTP
+                </button>
+              </>
+            ) : (
+              <>
+                <label className="block mb-2">Enter OTP</label>
+                <input
+                  type="text"
+                  value={enteredOTP}
+                  onChange={(e) => setEnteredOTP(e.target.value)}
+                  className="w-full px-3 py-2 mb-4 rounded bg-black text-white border border-yellow-500"
+                  placeholder="6-digit code"
+                />
+
+                <label className="block mb-2">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 py-2 mb-4 rounded bg-black text-white border border-yellow-500"
+                  placeholder="••••••••"
+                />
+
+                <button
+                  onClick={handleResetPassword}
+                  className="w-full bg-yellow-400 text-black font-bold py-2 rounded hover:bg-yellow-500"
+                >
+                  Reset Password
+                </button>
+              </>
+            )}
+
+            {resetError && <p className="text-red-500 text-sm mt-2">{resetError}</p>}
+            <button onClick={() => setShowReset(false)} className="absolute top-2 right-3 text-yellow-400 hover:text-red-400 text-lg"
+            >
+              ✕
+            </button>
+      
           </div>
         </div>
       )}
