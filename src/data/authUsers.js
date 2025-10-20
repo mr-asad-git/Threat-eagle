@@ -12,7 +12,7 @@ export const validateUser = (email, password, role) => {
   return null;
 };
 
-// 👤 Get the currently logged-in user based on authToken
+// ✅ Get the currently logged-in user
 export const getCurrentUser = () => {
   const token = localStorage.getItem('authToken');
   if (!token) return null;
@@ -20,7 +20,7 @@ export const getCurrentUser = () => {
   const [email, role] = token.split('-');
   if (!email || !role) return null;
 
-  const users = getStoredUsers();
+  const users = getStoredUsers(); // ✅ reads from 'threatUsers'
   return users.find((u) => u.email === email && u.role === role) || null;
 };
 

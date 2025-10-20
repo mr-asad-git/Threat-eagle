@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaExclamationCircle, FaCheckCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { addUser } from '../../data/userStore';
+import { getStoredUsers } from '../../data/userStore';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -15,16 +16,25 @@ export default function SignUpPage() {
 
   const passwordsMatch = password === confirm && password.length > 0;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-    if (!passwordsMatch) return;
+const handleSubmit = (e) => {
+  e.preventDefault();
+  setSubmitted(true);
+  if (!passwordsMatch) return;
 
-    const newUser = { email, password, role, name: email.split('@')[0] };
-    addUser(newUser);
-    navigate('/login');
-  };
+  const users = getStoredUsers();
+  const exists = users.some((u) => u.email === email && u.role === role);
+  if (exists) {
+    alert('❌ User already exists for this role.');
+    return;
+  }
 
+  const newUser = { email, password, role, name: email.split('@')[0] };
+  addUser(newUser);
+  navigate('/login');
+};
+
+
+  
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <form

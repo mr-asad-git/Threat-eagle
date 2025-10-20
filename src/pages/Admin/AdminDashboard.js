@@ -1,32 +1,25 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { findUser, updatePassword } from '../../data/userStore';
-
+import { getCurrentUser } from '../../data/authUsers';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-  // Admin data 
-  
-  // Users Data 
-  // const users = [
-  //   { id: 1, name: 'Alice Khan', email: 'alice@threat.com', role: 'Customer', status: 'Active' },
-  //   { id: 2, name: 'Bob Malik', email: 'bob@threat.com', role: 'Customer', status: 'Suspended' },
-  //   { id: 3, name: 'Charlie Admin', email: 'charlie@threat.com', role: 'Admin', status: 'Active' },
-  // ];
-
-
-  // Admin settings data
-
-  
+const [activeTab, setActiveTab] = useState('dashboard');  
 const [currentPassword, setCurrentPassword] = useState('');
 const [newPassword, setNewPassword] = useState('');
 const [passwordStatus, setPasswordStatus] = useState(null);
 
-const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+const [currentUser, setCurrentUser] = useState(null);
+useEffect(() => {
+  const user = getCurrentUser();
+  setCurrentUser(user);
+}, []);
 
 
+//Handeling password
 const handleChangePassword = () => {
   if (!currentUser || currentUser.role !== 'Admin') {
+    console.log('Current user:', currentUser);
     setPasswordStatus('❌ No admin session found.');
     return;
   }
@@ -42,6 +35,8 @@ const handleChangePassword = () => {
   setCurrentPassword('');
   setNewPassword('');
 };
+
+
   const [scanEnabled, setScanEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [auditLogging, setAuditLogging] = useState(true);

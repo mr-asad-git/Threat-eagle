@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { findUser, getUserToken } from '../../data/userStore';
-import { validateUser } from '../../data/authUsers'
+import { validateUser } from '../../data/authUsers';
+import { getCurrentUser } from '../../data/authUsers';
+
+
 import './LoginPageStyling.css';
 
 export default function LoginPage() {
@@ -24,8 +27,12 @@ export default function LoginPage() {
   const [enteredOTP, setEnteredOTP] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [resetError, setResetError] = useState('');
-
-
+  // eslint-disable-next-line
+  const [currentUser, setCurrentUser] = useState(null);
+useEffect(() => {
+  const user = getCurrentUser();
+  setCurrentUser(user);
+}, []);
   
 const handleLogin = (e) => {
   e.preventDefault();
