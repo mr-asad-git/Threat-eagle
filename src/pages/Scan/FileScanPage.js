@@ -1,71 +1,70 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 export default function FileScanPage() {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [fileInfo, setFileInfo] = useState(null);
   const [results, setResults] = useState([]);
+  const [activeSource, setActiveSource] = useState('virustotal');
 
   const statsRef = useRef({ scanned: 0, safe: 0, corrupted: 0 });
   const historyRef = useRef([]);
 
   useEffect(() => {
-    const query = new URLSearchParams(location.search);
-    const name = query.get('name');
-    const size = query.get('size');
-    const type = query.get('type');
-    const modified = query.get('modified');
-
-    if (name && size) {
-      const fileData = {
-        name,
-        size: formatBytes(Number(size)),
-        type: type || 'Unknown',
-        modified: modified ? new Date(Number(modified)).toLocaleString() : 'Unknown',
-        id: Math.floor(Math.random() * 999999),
-        checksum: generateChecksum(name + size + modified),
-      };
-
-      setFileInfo(fileData);
-
-      setTimeout(() => {
-        const isCorrupted = Math.random() < 0.5;
-
-        statsRef.current.scanned += 1;
-        statsRef.current.safe += isCorrupted ? 0 : 1;
-        statsRef.current.corrupted += isCorrupted ? 1 : 0;
-
-        const mockResults = isCorrupted
-          ? [
-              { pattern: 'eval()', line: 42, severity: 'High' },
-              { pattern: 'innerHTML', line: 88, severity: 'Moderate' },
-              { pattern: 'setTimeout()', line: 120, severity: 'Moderate' },
-            ]
-          : [];
-
-        setResults(mockResults);
-
-        historyRef.current.push({
-          name: fileData.name,
-          status: isCorrupted ? 'Corrupted' : 'Safe',
-          time: new Date().toLocaleTimeString(),
-        });
-
-        setLoading(false);
-      }, 2500);
-    } else {
-      setLoading(false);
+    // Show loader only when scan is in progress
+    let scanResult = location.state?.scanResult;
+    let fileName = location.state?.fileName;
+    if (!scanResult || !fileName) {
+      setLoading(true);
+      return;
     }
-  }, [location.search]);
+    setLoading(false);
+    let fileSize =
+      scanResult.virustotal_result?.meta?.file_info?.size ??
+      scanResult.virustotal_result?.report?.meta?.file_info?.size ??
+      scanResult.virustotal_result?.report?.data?.meta?.file_info?.size ??
+      scanResult.virustotal_result?.report?.data?.attributes?.size ??
+      scanResult.size;
+    let formattedSize = 'Unknown';
+    if (typeof fileSize === 'number') {
+      if (fileSize >= 1024 * 1024) {
+        formattedSize = (fileSize / (1024 * 1024)).toFixed(2) + ' MB';
+      } else {
+        formattedSize = (fileSize / 1024).toFixed(2) + ' KB';
+      }
+    }
+    let extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
+    let fileType = extMatch ? extMatch[1].toUpperCase() : 'Unknown';
+    let today = new Date().toLocaleString();
+    setFileInfo({
+      name: fileName,
+      size: formattedSize,
+      type: fileType,
+      modified: today,
+      id: scanResult.id || Math.floor(Math.random() * 999999),
+      checksum: scanResult.checksum || generateChecksum(fileName + (fileSize || '')),
+    });
+    setResults(scanResult.threats || []);
+    statsRef.current.scanned += 1;
+    statsRef.current.safe += scanResult.status === 'Safe' ? 1 : 0;
+    statsRef.current.corrupted += scanResult.status === 'Corrupted' ? 1 : 0;
+    historyRef.current.push({
+      name: fileName,
+      status: scanResult.status || (scanResult.threats?.length ? 'Corrupted' : 'Safe'),
+      time: new Date().toLocaleTimeString(),
+    });
+  }, [location.state]);
 
-  const formatBytes = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  function formatScanDate(dateStr) {
+    // dateStr: "20251018"
+    if (!dateStr || dateStr.length !== 8) return dateStr;
+    const year = dateStr.slice(0, 4);
+    const month = dateStr.slice(4, 6);
+    const day = dateStr.slice(6, 8);
+    return `${year}-${month}-${day}`;
+  }
 
   const generateChecksum = (input) => {
     let hash = 0;
@@ -77,37 +76,13 @@ export default function FileScanPage() {
   };
 
   return (
-    <div className="min-h-screen px-6 pt-40 py-10 bg-black text-yellow-300 font-mono">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold text-yellow-400 mb-8 tracking-wider border-b-2 border-yellow-500 pb-2">
-          🧾 FILE SCAN DASHBOARD
-        </h1>
+    <div className="min-h-screen h-full px-6 pt-10 py-10 bg-black text-yellow-300 font-mono">
+      <div className="max-w-8xl mx-auto bg-black p-6">
 
-        {/* Stats Panel */}
-        <div className="grid grid-cols-3 gap-4 mb-10 text-center">
-          <div className="bg-black/40 border-2 border-yellow-500 rounded-lg p-4 shadow-md">
-            <h2 className="text-lg font-bold text-yellow-300">Files Scanned</h2>
-            <p className="text-2xl font-bold text-yellow-400 mt-2">{statsRef.current.scanned}</p>
-          </div>
-          <div className="bg-black/40 border-2 border-green-500 rounded-lg p-4 shadow-md">
-            <h2 className="text-lg font-bold text-green-300">Files Safe</h2>
-            <p className="text-2xl font-bold text-green-400 mt-2">{statsRef.current.safe}</p>
-          </div>
-          <div className="bg-black/40 border-2 border-red-500 rounded-lg p-4 shadow-md">
-            <h2 className="text-lg font-bold text-red-300">Files Corrupted</h2>
-            <p className="text-2xl font-bold text-red-400 mt-2">{statsRef.current.corrupted}</p>
-          </div>
-        </div>
-
-        {/* Loader or Results */}
         {loading ? (
-          <div className="text-center mt-20">
-            <div className="animate-pulse text-yellow-300 text-xl">
-              ⚡ Scanning file... please wait...
-            </div>
-            <div className="mt-4 w-32 h-2 mx-auto bg-yellow-500 rounded-full overflow-hidden">
-              <div className="h-full bg-yellow-300 animate-ping"></div>
-            </div>
+          <div className="flex flex-col items-center justify-center mt-20">
+            <Loader2 className="animate-spin text-yellow-400" size={64} />
+            <div className="mt-6 text-yellow-300 text-xl font-bold">Scanning file... please wait...</div>
           </div>
         ) : !fileInfo ? (
           <div className="text-center text-yellow-400 mt-10">
@@ -115,80 +90,167 @@ export default function FileScanPage() {
           </div>
         ) : (
           <>
-            {/* File Credentials */}
-            <div className="bg-black/40 border-2 border-yellow-500 rounded-xl p-6 shadow-xl mb-10">
-              <h2 className="text-xl font-bold text-yellow-200 mb-4 tracking-wide">📄 File Credentials</h2>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <p><span className="text-yellow-400 font-semibold">Name:</span> {fileInfo.name}</p>
-                <p><span className="text-yellow-400 font-semibold">Size:</span> {fileInfo.size}</p>
-                <p><span className="text-yellow-400 font-semibold">Type:</span> {fileInfo.type}</p>
-                <p><span className="text-yellow-400 font-semibold">Last Modified:</span> {fileInfo.modified}</p>
-                <p><span className="text-yellow-400 font-semibold">File ID:</span> #{fileInfo.id}</p>
-                <p><span className="text-yellow-400 font-semibold">Checksum:</span> {fileInfo.checksum}</p>
+            <div className="grid grid-cols-4 mt-10 gap-8 mb-10">
+              <div className="bg-black border-2 border-yellow-500 rounded-lg   p-6 shadow-xl col-span-3 w-full">
+                <h2 className="text-xl font-bold text-yellow-200 mb-4 tracking-wide">File Details</h2>
+                <div className="grid grid-cols-[2fr_3fr] gap-32 w-full text-sm">
+                  <div>
+                    <p className="truncate w-full"><span className="text-yellow-400 font-semibold">Name:</span> {fileInfo.name}</p>
+                    <p className="mt-4"><span className="text-yellow-400 font-semibold">Size:</span> {fileInfo.size}</p>
+                  </div>
+                  <div>
+                    <p className="mb-4"><span className="text-yellow-400 font-semibold">Type:</span> {fileInfo.type}</p>
+                    <p><span className="text-yellow-400 font-semibold">Scanning Date:</span> {fileInfo.modified}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-yellow-500 border-2 border-yellow-500 rounded-lg p-6 shadow-md flex flex-col items-center justify-center col-span-1">
+                <h3 className="text-lg font-extrabold text-black mb-2">Total Scanners</h3>
+                <p className="text-3xl font-extrabold text-black">{
+                  [
+                    location.state?.scanResult?.virustotal_result,
+                    location.state?.scanResult?.hybrid_analysis_result,
+                    location.state?.scanResult?.olevba_result
+                  ].filter(Boolean).length
+                }</p>
+                <div className="text-xs text-black mt-2">(VirusTotal, Hybrid Analysis, OLEVBA)</div>
               </div>
             </div>
 
-            {/* Threat Matrix */}
-            <div className="bg-black/30 border border-yellow-500 rounded-lg p-4">
-              <h3 className="text-xl font-bold text-yellow-300 mb-3">📊 Threat Matrix</h3>
-              {results.length === 0 ? (
-                <p className="text-green-400 font-semibold">✅ No threats detected. File is safe.</p>
-              ) : (
-                <table className="w-full text-sm border-collapse border border-yellow-500">
-                  <thead className="bg-yellow-500 text-black">
-                    <tr>
-                      <th className="p-2 border border-yellow-400">#</th>
-                      <th className="p-2 border border-yellow-400">Pattern</th>
-                      <th className="p-2 border border-yellow-400">Line</th>
-                      <th className="p-2 border border-yellow-400">Severity</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-black/20 text-yellow-200">
-                    {results.map((r, i) => (
-                      <tr key={i}>
-                        <td className="p-2 border border-yellow-500">{i + 1}</td>
-                        <td className="p-2 border border-yellow-500">{r.pattern}</td>
-                        <td className="p-2 border border-yellow-500">Line {r.line}</td>
-                        <td className={`p-2 border border-yellow-500 ${
-                          r.severity === 'High' ? 'text-red-400' : 'text-yellow-300'
-                        }`}>{r.severity}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+            {/* Scanner Tabs Section */}
+            {location.state?.scanResult && (
+              <>
+                {/* Tabs for scanners */}
+                <div className="flex gap-2 mb-6">
+                  <button
+                    className={`px-4 py-2 rounded-t-lg font-bold text-sm border-b-2 transition-all duration-200 focus:outline-none ${activeSource === 'virustotal' ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-black text-yellow-300 border-yellow-700 hover:bg-yellow-400 hover:text-black hover:border-yellow-400'}`}
+                    onClick={() => setActiveSource('virustotal')}
+                  >VirusTotal</button>
+                  <button
+                    className={`px-4 py-2 rounded-t-lg font-bold text-sm border-b-2 transition-all duration-200 focus:outline-none ${activeSource === 'hybrid' ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-black text-yellow-300 border-yellow-700 hover:bg-yellow-400 hover:text-black hover:border-yellow-400'}`}
+                    onClick={() => setActiveSource('hybrid')}
+                  >Hybrid Analysis</button>
+                  <button
+                    className={`px-4 py-2 rounded-t-lg font-bold text-sm border-b-2 transition-all duration-200 focus:outline-none ${activeSource === 'olevba' ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-black text-yellow-300 border-yellow-700 hover:bg-yellow-400 hover:text-black hover:border-yellow-400'}`}
+                    onClick={() => setActiveSource('olevba')}
+                  >OLEVBA</button>
+                </div>
 
-            {/* Scan History */}
-            <div className="bg-black/30 border border-yellow-500 rounded-lg p-4 mt-8">
-              <h3 className="text-xl font-bold text-yellow-300 mb-3">📁 Scan History</h3>
-              {historyRef.current.length === 0 ? (
-                <p className="text-yellow-400">No files scanned yet.</p>
-              ) : (
-                <table className="w-full text-sm border-collapse border border-yellow-500">
-                  <thead className="bg-yellow-500 text-black">
-                    <tr>
-                      <th className="p-2 border border-yellow-400">#</th>
-                      <th className="p-2 border border-yellow-400">File Name</th>
-                      <th className="p-2 border border-yellow-400">Status</th>
-                      <th className="p-2 border border-yellow-400">Time</th>
-                    </tr>
-                  </thead>
-                                    <tbody className="bg-black/20 text-yellow-200">
-                    {historyRef.current.map((entry, i) => (
-                      <tr key={i}>
-                        <td className="p-2 border border-yellow-500">{i + 1}</td>
-                        <td className="p-2 border border-yellow-500">{entry.name}</td>
-                        <td className={`p-2 border border-yellow-500 ${
-                          entry.status === 'Corrupted' ? 'text-red-400' : 'text-green-400'
-                        }`}>{entry.status}</td>
-                        <td className="p-2 border border-yellow-500">{entry.time}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                {/* VirusTotal Result */}
+                {activeSource === 'virustotal' && location.state.scanResult.virustotal_result && (
+                  <div className="bg-black/30 p-4 mb-6 overflow-x-auto">
+                    {location.state.scanResult.virustotal_result.report?.data?.attributes ? (
+                      <>
+                        <div className="grid grid-cols-4 gap-6 mb-4">
+                          <div className="bg-black border border-green-600 rounded-lg p-4 flex flex-col items-center">
+                            <span className="font-semibold text-lg text-green-600 mb-2">Status</span>
+                            <span className="text-green-600 text-lg font-bold">{location.state.scanResult.virustotal_result.report.data.attributes.status || 'Unknown'}</span>
+                          </div>
+                          <div className="bg-black border border-red-600 rounded-lg p-4 flex flex-col items-center">
+                            <span className="font-semibold text-lg text-red-600 mb-2">Malicious</span>
+                            <span className="text-red-600 text-lg font-bold">{location.state.scanResult.virustotal_result.report.data.attributes.stats?.malicious ?? 0}</span>
+                          </div>
+                          <div className="bg-black border border-orange-600 rounded-lg p-4 flex flex-col items-center">
+                            <span className="font-semibold text-lg text-orange-600 mb-2">Harmless</span>
+                            <span className="text-orange-600 text-lg font-bold">{location.state.scanResult.virustotal_result.report.data.attributes.stats?.harmless ?? 0}</span>
+                          </div>
+                          <div className="bg-black border border-gray-600 rounded-lg p-4 flex flex-col items-center">
+                            <span className="font-semibold text-lg text-gray-600 mb-2">Undetected</span>
+                            <span className="text-gray-600 text-lg font-bold">{location.state.scanResult.virustotal_result.report.data.attributes.stats?.undetected ?? 0}</span>
+                          </div>
+                        </div>
+                        {location.state.scanResult.virustotal_result.report.data.attributes.results && (
+                          <div className="mt-8">
+                            <table className="min-w-full text-sm border border-yellow-600 rounded-lg overflow-hidden">
+                              <thead className="bg-black text-yellow-400 text-center text-lg">
+                                <tr>
+                                  <th className="px-4 py-3 border-b border-yellow-600 text-left">Source</th>
+                                  <th className="px-4 py-3 border-b border-yellow-600 text-center">Category</th>
+                                  <th className="px-4 py-3 border-b border-yellow-600 text-center">Method</th>
+                                  <th className="px-4 py-3 border-b border-yellow-600 text-center">Engine Update</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(location.state.scanResult.virustotal_result.report.data.attributes.results).map(([engine, result]) => (
+                                  <tr key={engine} className="border-b border-yellow-800">
+                                    <td className="px-4 py-3 text-yellow-200 font-mono text-left align-middle whitespace-nowrap">{result.engine_name || engine}</td>
+                                    <td className="px-4 py-3 text-center align-middle whitespace-nowrap">
+                                      <span className={
+                                        `px-2 py-1 border rounded-md text-xs font-bold ` +
+                                        (result.category === 'undetected' ? 'text-gray-400 border-gray-400' :
+                                         result.category === 'type-unsupported' ? 'text-orange-400 border-orange-400' :
+                                         'text-gray-400 border-gray-400')
+                                      }>
+                                        {result.category}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center align-middle whitespace-nowrap"><span className="text-yellow-200 px-2 py-1 border border-yellow-200 rounded-md text-xs font-bold">{result.method}</span></td>
+                                    <td className="px-4 py-3 text-center align-middle whitespace-nowrap"><span className="text-yellow-200 text-xs font-bold">{formatScanDate(result.engine_update)}</span></td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-yellow-400">No data available.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Hybrid Analysis Result */}
+                {(!activeSource || activeSource === 'hybrid') && location.state.scanResult.hybrid_analysis_result && (
+                  <div className="bg-black/30  p-4 mb-6">
+                    {(
+                      location.state.scanResult.hybrid_analysis_result.error === 'No results found or unexpected format' ||
+                      location.state.scanResult.hybrid_analysis_result.response?.message === 'Requested hash not found'
+                    ) ? (
+                      <p className="text-yellow-400 text-center">No results found.</p>
+                    ) : location.state.scanResult.hybrid_analysis_result.error ? (
+                      <p className="text-red-400 text-center">Error: {location.state.scanResult.hybrid_analysis_result.error}</p>
+                    ) : location.state.scanResult.hybrid_analysis_result.response ? (
+                      <p className="text-yellow-400 text-center">{location.state.scanResult.hybrid_analysis_result.response.message}</p>
+                    ) : (
+                      <p className="text-yellow-400 text-center">No Hybrid Analysis data available.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* OLEVBA Result */}
+                {(!activeSource || activeSource === 'olevba') && location.state.scanResult.olevba_result && (
+                  <div className="bg-black/30 p-4 mb-6">
+                    <p><span className="font-semibold text-yellow-400">Has Macros:</span> {location.state.scanResult.olevba_result.has_macros ? 'Yes' : 'No'}</p>
+                    {Array.isArray(location.state.scanResult.olevba_result.suspicious) && location.state.scanResult.olevba_result.suspicious.length > 0 ? (
+                      <div className="mt-4">
+                        <table className="min-w-full text-sm border border-yellow-600 rounded-lg overflow-hidden">
+                          <thead className="bg-black text-yellow-400 text-center text-lg">
+                            <tr>
+                              <th className="px-4 py-3 border-b border-yellow-600 text-left">Description</th>
+                              <th className="px-4 py-3 border-b border-yellow-600 text-center">Keyword</th>
+                              <th className="px-4 py-3 border-b border-yellow-600 text-center">Type</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {location.state.scanResult.olevba_result.suspicious.map((item, idx) => (
+                              <tr key={idx} className="border-b border-yellow-800">
+                                <td className="px-4 py-3 text-yellow-200 text-left align-middle whitespace-nowrap">{item.description}</td>
+                                <td className="px-4 py-3 text-center align-middle whitespace-nowrap">{item.keyword}</td>
+                                <td className="px-4 py-3 text-center align-middle whitespace-nowrap">{item.type}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p><span className="font-semibold text-yellow-400">Suspicious:</span> None</p>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+
           </>
         )}
       </div>

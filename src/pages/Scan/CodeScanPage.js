@@ -1,217 +1,225 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function CodeScanPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const initialCode = query.get('value') || '';
+  // Accept scanResult and fileName from location.state (from upload)
+  const scanResult = location.state?.scanResult || null;
+  const fileName = location.state?.fileName || '';
+  const [activeSource, setActiveSource] = useState('bandit');
+  const [loading, setLoading] = useState(false);
+  // Meta info toggle for semgrep
+  const [showMeta, setShowMeta] = useState(false);
 
-  const [codeInput, setCodeInput] = useState(() => query.get('value') || '');
-  const [hasAutoScanned, setHasAutoScanned] = useState(false);
-  //eslint-disable-next-line
-  const [lastScannedCode, setLastScannedCode] = useState('');
-  const [scanResults, setScanResults] = useState(null);
-  const [history, setHistory] = useState([]);
+  // File info extraction
+  const fileInfo = scanResult ? {
+    name: fileName,
+    type: fileName.split('.').pop(),
+    size: scanResult.bandit?.scanned_file ? null : null, // Could be passed in state if needed
+    scanned_file: scanResult.bandit?.scanned_file || scanResult.semgrep?.scanned_file || '',
+    scanDate: new Date().toLocaleString(),
+    sources: Object.keys(scanResult).length,
+  } : null;
 
-  // Load history on mount
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('scannedCodeBlocks')) || [];
-    setHistory(stored);
-  }, []);
+  // Tab sources
+  const sources = scanResult ? Object.keys(scanResult) : [];
 
-  const [errorMessage, setErrorMessage] = useState('');
-
-const scanCode = (code = codeInput, suppressWarning = false) => {
-  if (!code.trim()) return;
-
-  const stored = JSON.parse(localStorage.getItem('scannedCodeBlocks')) || [];
-  const isDuplicate = stored.some((entry) => entry.code === code);
-
-  if (isDuplicate) {
-    if (suppressWarning || hasAutoScanned) {
-      setHasAutoScanned(false); // reset after first use
-      return;
-    } else {
-      setErrorMessage('⚠️ This code has already been scanned.');
-      return;
-    }
-  }
-
-  setErrorMessage('');
-  setLastScannedCode(code);
-
-  const suspiciousWords = ['eval', 'exec', 'document.write', 'innerHTML', 'setTimeout', 'fetch', 'XMLHttpRequest'];
-  const found = suspiciousWords.filter((word) => code.includes(word));
-  const threatLevel = found.length === 0 ? 'Safe' : found.length <= 2 ? 'Moderate' : 'High';
-
-  const result = {
-    code,
-    length: code.length,
-    suspicious: found,
-    threat: threatLevel,
-  };
-
-  setScanResults(result);
-
-  const updatedHistory = [result, ...stored];
-  setHistory(updatedHistory);
-  localStorage.setItem('scannedCodeBlocks', JSON.stringify(updatedHistory));
-};
-
-useEffect(() => {
-  if (initialCode.trim()) {
-    const stored = JSON.parse(localStorage.getItem('scannedCodeBlocks')) || [];
-    const isDuplicate = stored.some((entry) => entry.code === initialCode);
-
-    if (!isDuplicate) {
-      const suspiciousWords = ['eval', 'exec', 'document.write', 'innerHTML', 'setTimeout', 'fetch', 'XMLHttpRequest'];
-      const found = suspiciousWords.filter((word) => initialCode.includes(word));
-      const threatLevel = found.length === 0 ? 'Safe' : found.length <= 2 ? 'Moderate' : 'High';
-
-      const result = {
-        code: initialCode,
-        length: initialCode.length,
-        suspicious: found,
-        threat: threatLevel,
-      };
-
-      setScanResults(result);
-      const updatedHistory = [result, ...stored];
-      setHistory(updatedHistory);
-      localStorage.setItem('scannedCodeBlocks', JSON.stringify(updatedHistory));
-    }
-
-    setLastScannedCode(initialCode);
-    setHasAutoScanned(true);
-    setErrorMessage('');
-  }
-}, [initialCode]);
-
-
-  return (
-    <div className="min-h-screen bg-black text-yellow-300 font-mono">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-yellow-700 bg-black/80 backdrop-blur-md shadow-md">
-        <div className="flex items-center pt-20 gap-4">
-          <button
-            onClick={() => navigate('/')}
-            className="text-yellow-400 hover:text-yellow-300 transition-transform transform hover:scale-110"
-            title="Go Back"
-          >
-            ←
-          </button>
-          <div className="text-2xl font-extrabold text-yellow-400 tracking-wider">Threat Eagle</div>
-          <select
-            className="bg-black border border-yellow-500 text-yellow-300 px-3 py-1 rounded-md text-sm focus:outline-none"
-            onChange={(e) => {
-              const type = e.target.value;
-              if (type === 'url') navigate('/scan/url');
-              if (type === 'code') navigate('/scan/code');
-              if (type === 'file') navigate('/scan/file');
-            }}
-          >
-            <option value="">Scan another...</option>
-            <option value="url">URL</option>
-            <option value="code">Code</option>
-            <option value="file">File</option>
-          </select>
-        </div>
-      </header>
-
-      {/* Page Title */}
-      <div className="text-center mt-10 mb-6">
-        <h1 className="text-4xl font-bold text-yellow-400 drop-shadow">Scanning Code</h1>
-      </div>
-
-      {/* Code Input */}
-      <div className="px-10 mb-6">
-        <textarea
-          value={codeInput}
-          onChange={(e) => setCodeInput(e.target.value)}
-          placeholder="Paste your code here..."
-          className="w-full h-40 bg-black border-2 border-yellow-600 rounded-lg p-4 text-yellow-200 font-mono text-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-        />
-        {errorMessage && (
-        <div className="mt-2 mb-2 text-red-400 font-semibold text-sm">
-            {errorMessage}
-        </div>
-        )}
-        <button
-          onClick={() => scanCode()}
-          className="mt-4 px-6 py-2 rounded-full bg-yellow-400 text-black font-bold text-sm shadow-lg border-2 border-yellow-500 hover:border-yellow-300 hover:scale-105 transition-all"
-        >
-          Scan Code
-        </button>
-      </div>
-
-      {/* Scan Results */}
-      {scanResults && (
-        <div className="px-10 mb-10">
-          <h2 className="text-2xl font-semibold text-yellow-400 mb-4">Scan Results</h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-yellow-900/10 border border-yellow-600 p-4 rounded-lg shadow-md text-center">
-              <h3 className="text-lg font-semibold">Code Length</h3>
-              <p className="text-3xl font-bold text-yellow-200 mt-2">{scanResults.length} chars</p>
-            </div>
-            <div className="bg-yellow-900/10 border border-yellow-600 p-4 rounded-lg shadow-md text-center">
-              <h3 className="text-lg font-semibold">Suspicious Keywords</h3>
-              <p className="mt-2 text-yellow-200">{scanResults.suspicious.join(', ') || 'None'}</p>
-            </div>
-            <div className={`p-4 rounded-lg shadow-md text-center ${
-              scanResults.threat === 'Safe'
-                ? 'bg-green-900/10 border border-green-600'
-                : scanResults.threat === 'Moderate'
-                ? 'bg-yellow-900/10 border border-yellow-600'
-                : 'bg-red-900/10 border border-red-600'
-            }`}>
-              <h3 className="text-lg font-semibold">Threat Level</h3>
-              <p className="text-2xl font-bold mt-2">
-                {scanResults.threat}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* History Table */}
-      <div className="px-10 pb-20">
-        <h2 className="text-2xl font-semibold text-yellow-400 mb-4">Scanned Code History</h2>
-        <div className="bg-yellow-900/5 border border-yellow-700 rounded-lg overflow-hidden shadow-lg">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-yellow-800/20 text-yellow-300 uppercase tracking-wider">
+  // Helper to render issues/results for each source
+  const renderSourceResults = (source, showMeta, setShowMeta) => {
+    if (!scanResult || !scanResult[source]) return <div className="text-yellow-400">No data for {source}</div>;
+    if (source === 'bandit') {
+      const bandit = scanResult.bandit;
+      if (bandit.error) return <div className="text-red-400">Error: {bandit.error}</div>;
+      if (!bandit.issues || bandit.issues.length === 0) return <div className="text-green-400">No issues found.</div>;
+      // Filter unique test_id issues
+      const uniqueIssues = [];
+      const seenTestIds = new Set();
+      for (const issue of bandit.issues) {
+        if (!seenTestIds.has(issue.test_id)) {
+          uniqueIssues.push(issue);
+          seenTestIds.add(issue.test_id);
+        }
+      }
+      return (
+        <div>
+          <div className="text-yellow-300 mb-3">Total Issues: {uniqueIssues.length}</div>
+          <table className="w-full text-sm border border-yellow-700 rounded-lg overflow-hidden mb-4">
+            <thead className="bg-yellow-800/20">
               <tr>
-                <th className="px-4 py-2">#</th>
-                <th className="px-4 py-2">Snippet</th>
-                <th className="px-4 py-2">Threat</th>
+                <th className="px-2 py-2 text-center">Test ID</th>
+                <th className="px-2 py-2 text-center">Issue</th>
+                <th className="px-2 py-2 text-center">Severity</th>
               </tr>
             </thead>
             <tbody>
-              {history.map((entry, index) => (
-                <tr key={index} className="border-t border-yellow-800 hover:bg-yellow-800/10">
-                  <td className="px-4 py-2 text-yellow-500">{index + 1}</td>
-                  <td className="px-4 py-2 text-yellow-100 break-all max-w-[600px]">{entry.code.slice(0, 100)}...</td>
-                  <td className="px-4 py-2 font-semibold text-center">
-                    {entry.threat === 'Safe' ? (
-                      <span className="text-green-400">Safe</span>
-                    ) : entry.threat === 'Moderate' ? (
-                      <span className="text-yellow-400">Moderate</span>
-                    ) : (
-                      <span className="text-red-400">High</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {history.length === 0 && (
-                <tr>
-                  <td colSpan="3" className="text-center text-yellow-500 py-6">
-                    No code scanned yet.
-                  </td>
-                </tr>
-              )}
+              {uniqueIssues.map((issue, idx) => {
+                let sevColor = 'text-yellow-300';
+                if (issue.severity?.toLowerCase() === 'low') sevColor = 'text-green-400';
+                if (issue.severity?.toLowerCase() === 'medium') sevColor = 'text-yellow-400';
+                if (issue.severity?.toLowerCase() === 'high' || issue.severity?.toLowerCase() === 'critical') sevColor = 'text-red-500 font-bold';
+                return (
+                  <tr key={idx} className="border-t border-yellow-800 text-center">
+                    <td className="px-2 py-2 text-yellow-500 align-middle">{issue.test_id}</td>
+                    <td className="px-2 py-2 text-yellow-100 align-middle">{issue.issue_text}</td>
+                    <td className={`px-2 py-2 font-semibold align-middle ${sevColor}`}>{issue.severity}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+      );
+    }
+    if (source === 'semgrep') {
+      const semgrep = scanResult.semgrep;
+      if (semgrep.error) return <div className="text-red-400">Error: {semgrep.error}</div>;
+      // Support both semgrep.results and semgrep.output.results
+      const results = semgrep.output?.results || semgrep.results || [];
+      if (!results || results.length === 0) return <div className="text-green-400">No issues found.</div>;
+      // Show meta info from first result if present, filtering unwanted keys
+      const firstMetaRaw = results[0]?.extra?.metadata;
+      const unwantedKeys = ['source', 'shortlink', 'license'];
+      const firstMeta = firstMetaRaw
+        ? Object.fromEntries(Object.entries(firstMetaRaw).filter(([key]) => !unwantedKeys.includes(key)))
+        : undefined;
+      // Helper for color coding
+      const getColorClass = (field, val) => {
+        if (!val) return '';
+        const v = String(val).toLowerCase();
+        if (field === 'confidence' || field === 'impact' || field === 'likelihood') {
+          if (v === 'low') return 'border-green-400 bg-green-900/30 text-green-300';
+          if (v === 'medium') return 'border-yellow-400 bg-yellow-900/30 text-yellow-200';
+          if (v === 'high') return 'border-orange-400 bg-orange-900/30 text-orange-300';
+          if (v === 'critical') return 'border-red-500 bg-red-900/30 text-red-300';
+        }
+        return '';
+      };
+      // Highlighted fields
+      const highlightFields = ['confidence', 'impact', 'likelihood'];
+      return (
+        <div>
+          {firstMeta && (
+            <div className="mb-6">
+              <button
+                className={`px-4 py-2 rounded font-bold text-yellow-400 bg-black border border-yellow-400 hover:bg-yellow-400 hover:text-black transition mb-2`}
+                onClick={() => setShowMeta((prev) => !prev)}
+                style={{ outline: 'none' }}
+              >
+                {showMeta ? 'Hide Meta Information ▲' : 'Show Meta Information ▼'}
+              </button>
+              {showMeta && (
+                <div className="bg-black/80 rounded-xl p-5 mt-2">
+                  <div className="font-bold text-lg text-yellow-400 mb-3">Meta Information :</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {Object.entries(firstMeta).map(([key, value], i) => {
+                      const isHighlight = highlightFields.includes(key.toLowerCase());
+                      const colorClass = isHighlight ? getColorClass(key.toLowerCase(), value) : '';
+                      return (
+                        <div
+                          key={i}
+                          className={`text-sm font-semibold ${isHighlight ? `border-2 rounded-lg px-2 py-1 font-bold ${colorClass}` : 'text-yellow-200'}`}
+                          style={isHighlight ? { boxShadow: '0 0 0 2px #FFD700' } : {}}
+                        >
+                          <span className={`font-semibold ${isHighlight ? 'text-yellow-100' : 'text-yellow-400'}`}>{key}:</span> {Array.isArray(value) ? value.join(', ') : String(value)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="text-yellow-300 mb-3">Total Results: {results.length}</div>
+          <table className="w-full text-sm border border-yellow-700 rounded-lg overflow-hidden mb-4">
+            <thead className="bg-yellow-800/20">
+              <tr>
+                <th className="px-2 py-2 text-center">Check ID</th>
+                <th className="px-2 py-2 text-center">Message</th>
+                <th className="px-2 py-2 text-center">Validation State</th>
+                <th className="px-2 py-2 text-center">Line</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((result, idx) => {
+                const validationState = result.validation_state || result.extra?.validation_state || '--';
+                let valColor = 'text-yellow-300';
+                if (validationState?.toLowerCase() === 'no_validator') valColor = 'text-red-500 font-bold';
+                if (validationState?.toLowerCase() === 'valid') valColor = 'text-green-400 font-bold';
+                const message = result.extra?.message || result.message || '';
+                return (
+                  <tr key={idx} className="border-t border-yellow-800 text-center">
+                    <td className="px-2 py-2 text-yellow-500 align-middle">{result.check_id}</td>
+                    <td className="px-2 py-2 text-yellow-100 align-middle">{message}</td>
+                    <td className={`px-2 py-2 font-semibold align-middle ${valColor}`}>{validationState}</td>
+                    <td className="px-2 py-2 text-yellow-200 align-middle">{result.start?.line || result.end?.line || ''}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    return <div className="text-yellow-400">No renderer for {source}</div>;
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-yellow-300 font-mono pt-16">
+      {/* Main Container */}
+      <div className="max-w-8xl mx-auto bg-black/90 rounded-3xl shadow-2xl  p-10 flex flex-col gap-8">
+        {/* File Info Section */}
+        {fileInfo && (
+          <div className="flex flex-row gap-8 items-start mb-2">
+            <div className="flex-1 bg-black rounded-xl p-6 shadow border-2 border-yellow-400 flex flex-col gap-2 min-h-[120px]" style={{ borderRadius: '16px' }}>
+              <div className="font-bold text-yellow-400 text-2xl mb-5" style={{ fontFamily: 'monospace' }}>File Details</div>
+              <div className="flex flex-row gap-20">
+                <div className="flex flex-col gap-2">
+                  <div><span className="font-bold text-yellow-400">Name:</span> <span className="text-yellow-200 font-mono">{fileInfo.name}</span></div>
+                  <div><span className="font-bold text-yellow-400">Size:</span> <span className="text-yellow-200 font-mono">{fileInfo.size ? fileInfo.size : '--'}</span></div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div><span className="font-bold text-yellow-400">Type:</span> <span className="text-yellow-200 font-mono">{fileInfo.type ? fileInfo.type.toUpperCase() : '--'}</span></div>
+                  <div><span className="font-bold text-yellow-400">Scanning Date:</span> <span className="text-yellow-200 font-mono">{fileInfo.scanDate}</span></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col justify-center items-center min-w-[260px] bg-yellow-500 rounded-xl p-6 shadow ">
+              <div className="font-bold text-black text-2xl mb-2 tracking-wide" style={{ fontFamily: 'monospace' }}>Total Scanners</div>
+              <div className="text-black text-5xl font-extrabold mb-2 drop-shadow-lg">{fileInfo.sources}</div>
+              <div className="text-black text-sm font-mono opacity-80">({sources.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')})</div>
+            </div>
+          </div>
+        )}
+
+        {/* Tabs and Results Section */}
+        {sources.length > 0 && (
+          <div className="flex flex-col gap-4 mt-2">
+            <div className="flex flex-row gap-2 items-end mb-2">
+              {sources.map((src) => (
+                <button
+                  key={src}
+                  onClick={() => setActiveSource(src)}
+                  className={`px-6 py-2 font-bold text-base rounded-t-md border-b-2 transition-all duration-200
+                    ${activeSource === src
+                      ? 'bg-yellow-400 text-black border-yellow-400'
+                      : 'bg-black text-yellow-400 border-transparent hover:bg-yellow-400 hover:text-black hover:border-yellow-400'}
+                  `}
+                  style={{ outline: 'none', minWidth: '140px' }}
+                >
+                  {src.charAt(0).toUpperCase() + src.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div className="bg-black rounded-b-xl shadow-xl border-2 border-yellow-400 p-6">
+              {renderSourceResults(activeSource, showMeta, setShowMeta)}
+            </div>
+          </div>
+        )}
+
+        {!scanResult && (
+          <div className="text-center mt-20 text-yellow-400 text-xl">No scan results available. Please upload and scan a code file.</div>
+        )}
       </div>
     </div>
   );
