@@ -1,10 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomerFiles from './MyFiles';
 import ScanHistory from './ScanHistory';
 import CustomerProfile from './Profile';
+import { getCurrentUser } from '../../data/authUsers';
+import { findUser, updatePassword } from '../../data/userStore';
 
 export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+// eslint-disable-next-line
+  const [passwordStatus, setPasswordStatus] = useState(null);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+  }, []);
+
+// eslint-disable-next-line
+const handleChangePassword = () => {
+  if (!currentUser || currentUser.role !== 'Customer') {
+    setPasswordStatus('❌ No customer session found.');
+    return;
+  }
+
+  const match = findUser(currentUser.email, currentPassword);
+  if (!match) {
+    setPasswordStatus('❌ Incorrect current password.');
+    return;
+  }
+
+  updatePassword(currentUser.email, newPassword);
+  setPasswordStatus('✅ Password changed successfully!');
+  setCurrentPassword('');
+  setNewPassword('');
+};
+
 
   const stats = {
     scanned: 42,
@@ -24,7 +56,7 @@ export default function CustomerDashboard() {
         return (
           <div className="p-6">
             <h1 className="text-4xl font-bold text-yellow-400 mb-8 tracking-wider border-b-2 border-yellow-500 pb-2">
-              🧑‍💻 Welcome Back, Customer
+              🧑‍💻 Welcome Back, {currentUser?.name || 'Customer'}
             </h1>
 
             {/* Stats Panel */}
@@ -88,55 +120,10 @@ export default function CustomerDashboard() {
 
   return (
     <div className="flex min-h-screen bg-black text-yellow-300 font-mono">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#0a0a0a] border-r border-yellow-500 p-6 fixed h-screen">
-        <h2 className="text-2xl font-bold text-yellow-400 mb-8 tracking-widest">🧑‍💼 Customer</h2>
-        <nav className="space-y-4">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`block w-full text-left px-4 py-2 rounded-lg font-semibold ${
-              activeTab === 'dashboard'
-                ? 'bg-yellow-500 text-black'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('files')}
-            className={`block w-full text-left px-4 py-2 rounded-lg font-semibold ${
-              activeTab === 'files'
-                ? 'bg-yellow-500 text-black'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            Customer Files
-          </button>
-          <button
-            onClick={() => setActiveTab('scan')}
-            className={`block w-full text-left px-4 py-2 rounded-lg font-semibold ${
-              activeTab === 'scan'
-                ? 'bg-yellow-500 text-black'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            Scan History
-          </button>
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`block w-full text-left px-4 py-2 rounded-lg font-semibold ${
-              activeTab === 'profile'
-                ? 'bg-yellow-500 text-black'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            Profile
-          </button>
-        </nav>
-      </aside>
+      
 
       {/* Main Content */}
-      <main className="ml-64 w-full">{renderContent()}</main>
+      <main className="ml-64 mt-20 w-full">{renderContent()}</main>
     </div>
   );
 }

@@ -1,9 +1,16 @@
 import { Navigate } from 'react-router-dom';
-import { isAuthenticated, getRole } from '../../utils/auth';
+import { getCurrentUser } from '../../data/authUsers';
 
+export default function ProtectedRoute({ role, children }) {
+  const user = getCurrentUser();
 
-export default function ProtectedRoute({ children, role }) {
-  if (!isAuthenticated()) return <Navigate to="/" />;
-  if (role && getRole() !== role) return <Navigate to="/" />;
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (user.role.toLowerCase() !== role.toLowerCase()) {
+    return <Navigate to="/" />;
+  }
+
   return children;
 }

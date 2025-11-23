@@ -18,7 +18,16 @@ export const saveUsers = (users) => {
 // 🔍 Find a user by email and password
 export const findUser = (email, password) => {
   const users = getStoredUsers();
-  return users.find((u) => u.email === email && u.password === password) || null;
+  const user = users.find((u) => u.email === email && u.password === password);
+  
+  if (user) {
+    // Check if user is suspended
+    if (user.status === 'Suspended') {
+      throw new Error('Your account has been suspended! Kindly contact admin.');
+    }
+    return user;
+  }
+  return null;
 };
 
 // 🔐 Update a user's password
@@ -39,6 +48,11 @@ export const getUserToken = (user) => {
 // ➕ Add a new user to threatUsers
 export const addUser = (newUser) => {
   const users = getStoredUsers();
-  users.push(newUser);
+  // Add default status for new users
+  const userWithStatus = {
+    ...newUser,
+    status: 'Active'  // Default status for new users
+  };
+  users.push(userWithStatus);
   saveUsers(users);
 };

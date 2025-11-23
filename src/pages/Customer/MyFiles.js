@@ -16,7 +16,7 @@ export default function MyFiles() {
   );
 
   return (
-    <div className="min-h-screen bg-black text-yellow-300 font-mono px-6 py-10">
+    <div className="min-h-screen pt-40 bg-black text-yellow-300 font-mono px-6 py-10">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 tracking-wider border-b-2 border-yellow-500 pb-2">
           📁 My Files

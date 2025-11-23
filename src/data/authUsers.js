@@ -4,7 +4,7 @@ import { findUser, getStoredUsers, saveUsers } from './userStore';
 // ✅ Validate user and set authToken
 export const validateUser = (email, password, role) => {
   const user = findUser(email, password);
-  if (user && user.role === role) {
+  if (user && user.role.toLowerCase() === role.toLowerCase()) {
     const token = `${user.email}-${user.role}`;
     localStorage.setItem('authToken', token);
     return user;

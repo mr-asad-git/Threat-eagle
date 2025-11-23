@@ -10,7 +10,9 @@ import './LoginPageStyling.css';
 export default function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const initialRole = location.state?.role || 'Customer';
+  // normalize incoming role (handles 'customer'|'Customer'|'CUSTOMER')
+  const normalizeRole = (r) => (r ? r.charAt(0).toUpperCase() + r.slice(1).toLowerCase() : 'Customer');
+  const initialRole = normalizeRole(location.state?.role || 'Customer');
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -19,13 +21,12 @@ export default function LoginPage() {
   const [showPopup, setShowPopup] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset password states
+  // Reset password states (no OTP)
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [generatedOTP, setGeneratedOTP] = useState('');
-  const [enteredOTP, setEnteredOTP] = useState('');
+  const [resetStep, setResetStep] = useState(0); // 0: ask email, 1: ask new password
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [resetError, setResetError] = useState('');
   // eslint-disable-next-line
   const [currentUser, setCurrentUser] = useState(null);
@@ -34,56 +35,79 @@ useEffect(() => {
   setCurrentUser(user);
 }, []);
   
-const handleLogin = (e) => {
+ const handleLogin = (e) => {
   e.preventDefault();
 
   const user = validateUser(email, password, role);
-
-  if (user && user.role === role) {
-    const token = getUserToken(user); // ✅ use helper
+  if (user && user.role && user.role.toLowerCase() === (role || '').toLowerCase()) {
+    const token = getUserToken(user);
     localStorage.setItem('authToken', token);
+
+    try {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+    } catch (err) {
+      // ignore storage errors
+    }
 
     setShowPopup(true);
     setError('');
 
     setTimeout(() => {
       setShowPopup(false);
-      navigate(user.role === 'Admin' ? '/admin/dashboard' : '/customer/dashboard');
+
+      // ✅ Use exact route casing as defined in App.js
+      if (user.role === 'Admin') {
+        navigate('/admin/dashboard');
+      } else if (user.role === 'Customer') {
+        navigate('/customer/dashboard');
+      } else if (user.role === 'Support') {
+        navigate('/support/portal');
+      } else {
+        navigate('/');
+      }
+
+      // Optional: refresh header
+      // window.location.reload();
     }, 2000);
   } else {
     setError('Invalid credentials. Please try again.');
   }
 };
 
-
-
-  const handleSendOTP = () => {
-    const user = findUser(resetEmail, '', role);
+  const handleResetEmail = () => {
+    // Only check email, not password
+    const users = JSON.parse(localStorage.getItem('threatUsers')) || [];
+    const user = users.find((u) => u.email === resetEmail && u.role === role);
     if (user) {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOTP(otp);
-      setOtpSent(true);
       setResetError('');
-      alert(`🔐 Your OTP is: ${otp}`);
+      setResetStep(1);
     } else {
       setResetError('Email not found for selected role.');
     }
   };
 
   const handleResetPassword = () => {
-    if (enteredOTP === generatedOTP) {
-      const users = JSON.parse(localStorage.getItem('threatUsers')) || [];
-      const updated = users.map((u) =>
-        u.email === resetEmail && u.role === role
-          ? { ...u, password: newPassword }
-          : u
-      );
-      localStorage.setItem('threatUsers', JSON.stringify(updated));
-      setShowReset(false);
-      alert('✅ Password updated. You can now log in.');
-    } else {
-      setResetError('Invalid OTP. Please try again.');
+    if (!newPassword || !confirmPassword) {
+      setResetError('Please fill both password fields.');
+      return;
     }
+    if (newPassword !== confirmPassword) {
+      setResetError('Passwords do not match.');
+      return;
+    }
+    const users = JSON.parse(localStorage.getItem('threatUsers')) || [];
+    const updated = users.map((u) =>
+      u.email === resetEmail && u.role === role
+        ? { ...u, password: newPassword }
+        : u
+    );
+    localStorage.setItem('threatUsers', JSON.stringify(updated));
+    setShowReset(false);
+    setResetStep(0);
+    setResetEmail('');
+    setNewPassword('');
+    setConfirmPassword('');
+    alert('✅ Password updated. You can now log in.');
   };
 
   return (
@@ -178,13 +202,12 @@ const handleLogin = (e) => {
         </div>
       )}
 
-      {/* Reset Password Popup */}
+      {/* Reset Password Popup (no OTP) */}
       {showReset && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80">
           <div className="bg-gray-900 border border-yellow-500 rounded-xl p-6 w-[350px] text-yellow-300 relative">
             <h3 className="text-xl font-bold mb-4">🔐 Reset Password</h3>
-
-            {!otpSent ? (
+            {resetStep === 0 ? (
               <>
                 <label className="block mb-2">Enter your email</label>
                 <input
@@ -195,47 +218,42 @@ const handleLogin = (e) => {
                   placeholder="you@example.com"
                 />
                 <button
-                  onClick={handleSendOTP}
+                  onClick={handleResetEmail}
                   className="w-full bg-yellow-400 text-black font-bold py-2 rounded hover:bg-yellow-500"
                 >
-                  Send OTP
+                  Next
                 </button>
               </>
             ) : (
               <>
-                <label className="block mb-2">Enter OTP</label>
-                <input
-                  type="text"
-                  value={enteredOTP}
-                  onChange={(e) => setEnteredOTP(e.target.value)}
-                  className="w-full px-3 py-2 mb-4 rounded bg-black text-white border border-yellow-500"
-                  placeholder="6-digit code"
-                />
-
-                <label className="block mb-2">New Password</label>
+                <label className="block mb-2">Enter new password</label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full px-3 py-2 mb-4 rounded bg-black text-white border border-yellow-500"
-                  placeholder="••••••••"
+                  placeholder="New password"
                 />
-
+                <label className="block mb-2">Re-enter new password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 mb-4 rounded bg-black text-white border border-yellow-500"
+                  placeholder="Re-enter password"
+                />
                 <button
                   onClick={handleResetPassword}
                   className="w-full bg-yellow-400 text-black font-bold py-2 rounded hover:bg-yellow-500"
                 >
-                  Reset Password
+                  Change Password
                 </button>
               </>
             )}
-
             {resetError && <p className="text-red-500 text-sm mt-2">{resetError}</p>}
-            <button onClick={() => setShowReset(false)} className="absolute top-2 right-3 text-yellow-400 hover:text-red-400 text-lg"
-            >
+            <button onClick={() => { setShowReset(false); setResetStep(0); setResetEmail(''); setNewPassword(''); setConfirmPassword(''); setResetError(''); }} className="absolute top-2 right-3 text-yellow-400 hover:text-red-400 text-lg">
               ✕
             </button>
-      
           </div>
         </div>
       )}

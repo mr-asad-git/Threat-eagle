@@ -1,9 +1,8 @@
 import React from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Shared/Navbar'; // ✅ Add this line
 import Header from './components/Header';
-import GlobalNavArrows from './components/GlobalNavArrows';
+// import GlobalNavArrows from './components/GlobalNavArrows';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 // Public Pages
@@ -35,9 +34,8 @@ import Profile from './pages/Customer/Profile';
 function App() {
   return (
     <Router>
-      <Navbar /> {/* ✅ Add this line */}
       <Header />
-      <GlobalNavArrows />
+      {/* <GlobalNavArrows /> */}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />

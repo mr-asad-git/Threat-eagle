@@ -28,9 +28,15 @@ const handleSubmit = (e) => {
     return;
   }
 
-  const newUser = { email, password, role, name: email.split('@')[0] };
-  addUser(newUser);
-  navigate('/login');
+  const newUser = {
+    email,
+    password,
+    role: role.charAt(0).toUpperCase() + role.slice(1).toLowerCase(),
+    name: email.split('@')[0],
+  }
+
+  addUser(newUser); // ✅ this was missing
+  navigate('/login'); // ✅ this was missing
 };
 
 

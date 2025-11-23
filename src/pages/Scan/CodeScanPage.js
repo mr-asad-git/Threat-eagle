@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function CodeScanPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const query = new URLSearchParams(location.search);
-  const initialCode = query.get('value') || '';
 
-  const [codeInput, setCodeInput] = useState(() => query.get('value') || '');
+  const [codeInput, setCodeInput] = useState(() => {
+    // Check URL parameters first, then location state
+    const urlCode = query.get('value');
+    const stateCode = location.state?.code;
+    return urlCode || stateCode || '';
+  });
   const [hasAutoScanned, setHasAutoScanned] = useState(false);
   //eslint-disable-next-line
   const [lastScannedCode, setLastScannedCode] = useState('');
@@ -22,7 +26,7 @@ export default function CodeScanPage() {
 
   const [errorMessage, setErrorMessage] = useState('');
 
-const scanCode = (code = codeInput, suppressWarning = false) => {
+const scanCode = useCallback((code = codeInput, suppressWarning = false) => {
   if (!code.trim()) return;
 
   const stored = JSON.parse(localStorage.getItem('scannedCodeBlocks')) || [];
@@ -57,36 +61,27 @@ const scanCode = (code = codeInput, suppressWarning = false) => {
   const updatedHistory = [result, ...stored];
   setHistory(updatedHistory);
   localStorage.setItem('scannedCodeBlocks', JSON.stringify(updatedHistory));
-};
+}, [codeInput, hasAutoScanned]);
 
 useEffect(() => {
-  if (initialCode.trim()) {
-    const stored = JSON.parse(localStorage.getItem('scannedCodeBlocks')) || [];
-    const isDuplicate = stored.some((entry) => entry.code === initialCode);
-
-    if (!isDuplicate) {
-      const suspiciousWords = ['eval', 'exec', 'document.write', 'innerHTML', 'setTimeout', 'fetch', 'XMLHttpRequest'];
-      const found = suspiciousWords.filter((word) => initialCode.includes(word));
-      const threatLevel = found.length === 0 ? 'Safe' : found.length <= 2 ? 'Moderate' : 'High';
-
-      const result = {
-        code: initialCode,
-        length: initialCode.length,
-        suspicious: found,
-        threat: threatLevel,
-      };
-
-      setScanResults(result);
-      const updatedHistory = [result, ...stored];
-      setHistory(updatedHistory);
-      localStorage.setItem('scannedCodeBlocks', JSON.stringify(updatedHistory));
+  // Automatically scan code when component mounts if code is present
+  const performInitialScan = async () => {
+    if (codeInput.trim() && !hasAutoScanned) {
+      // Small delay to ensure UI is rendered first
+      await new Promise(resolve => setTimeout(resolve, 100));
+      scanCode(codeInput, true);
+      setHasAutoScanned(true);
+      
+      // Scroll to results section
+      const resultsSection = document.querySelector('[data-results-section]');
+      if (resultsSection) {
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+      }
     }
+  };
 
-    setLastScannedCode(initialCode);
-    setHasAutoScanned(true);
-    setErrorMessage('');
-  }
-}, [initialCode]);
+  performInitialScan();
+}, [codeInput, hasAutoScanned, scanCode]);
 
 
   return (
@@ -145,7 +140,7 @@ useEffect(() => {
 
       {/* Scan Results */}
       {scanResults && (
-        <div className="px-10 mb-10">
+        <div className="px-10 mb-10" data-results-section>
           <h2 className="text-2xl font-semibold text-yellow-400 mb-4">Scan Results</h2>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-yellow-900/10 border border-yellow-600 p-4 rounded-lg shadow-md text-center">

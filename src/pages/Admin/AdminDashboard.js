@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { useEffect } from 'react';
-import { findUser, updatePassword } from '../../data/userStore';
+import { useState, useEffect } from 'react';
+import { findUser, updatePassword, getStoredUsers, saveUsers } from '../../data/userStore';
 import { getCurrentUser } from '../../data/authUsers';
 
 export default function AdminDashboard() {
@@ -10,10 +9,28 @@ const [newPassword, setNewPassword] = useState('');
 const [passwordStatus, setPasswordStatus] = useState(null);
 
 const [currentUser, setCurrentUser] = useState(null);
+const [users, setUsers] = useState([]);
+const [searchQuery, setSearchQuery] = useState('');
+
+// Load current user and all users
 useEffect(() => {
   const user = getCurrentUser();
   setCurrentUser(user);
+  
+  const storedUsers = getStoredUsers();
+  setUsers(storedUsers);
 }, []);
+
+// Function to handle user suspension
+const handleSuspendUser = (email) => {
+  const updatedUsers = users.map(user => 
+    user.email === email 
+      ? { ...user, status: user.status === 'Suspended' ? 'Active' : 'Suspended' }
+      : user
+  );
+  saveUsers(updatedUsers);
+  setUsers(updatedUsers);
+};
 
 
 //Handeling password
@@ -51,7 +68,7 @@ const handleChangePassword = () => {
   return (
     <>
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid pt-40 grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-black/40 border-2 border-yellow-500 rounded-xl p-6 shadow-lg text-center">
           <h2 className="text-lg font-bold text-yellow-300">Total Users</h2>
           <p className="text-3xl font-bold text-yellow-400 mt-2">1,248</p>
@@ -175,18 +192,24 @@ const handleChangePassword = () => {
   return (
     <>
       {/* User Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid pt-40 grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-black/40 border-2 border-yellow-500 rounded-xl p-6 shadow-lg text-center">
-          <h2 className="text-lg font-bold text-yellow-300">Total Users</h2>
-          <p className="text-3xl font-bold text-yellow-400 mt-2">1,248</p>
+          <h2 className="text-lg font-bold text-yellow-300">Total Customers</h2>
+          <p className="text-3xl font-bold text-yellow-400 mt-2">
+            {users.filter(u => u.role === 'Customer').length}
+          </p>
         </div>
         <div className="bg-black/40 border-2 border-green-500 rounded-xl p-6 shadow-lg text-center">
-          <h2 className="text-lg font-bold text-green-300">Active Users</h2>
-          <p className="text-3xl font-bold text-green-400 mt-2">1,032</p>
+          <h2 className="text-lg font-bold text-green-300">Active Customers</h2>
+          <p className="text-3xl font-bold text-green-400 mt-2">
+            {users.filter(u => u.role === 'Customer' && u.status === 'Active').length}
+          </p>
         </div>
         <div className="bg-black/40 border-2 border-red-500 rounded-xl p-6 shadow-lg text-center">
           <h2 className="text-lg font-bold text-red-300">Suspended Accounts</h2>
-          <p className="text-3xl font-bold text-red-400 mt-2">42</p>
+          <p className="text-3xl font-bold text-red-400 mt-2">
+            {users.filter(u => u.role === 'Customer' && u.status === 'Suspended').length}
+          </p>
         </div>
       </div>
 
@@ -194,7 +217,9 @@ const handleChangePassword = () => {
       <div className="mb-6">
         <input
           type="text"
-          placeholder="🔍 Search users by name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="🔍 Search customers by name or email..."
           className="w-full bg-[#1a1a1a] text-yellow-200 placeholder-yellow-500 px-6 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all"
         />
 
@@ -215,13 +240,28 @@ const handleChangePassword = () => {
             </tr>
           </thead>
           <tbody className="bg-black/20 text-yellow-200">
-            {[
-              { name: 'Ayesha Khan', email: 'ayesha@threat.com', role: 'Admin', status: 'Active' },
-              { name: 'Bilal Raza', email: 'bilal@threat.com', role: 'User', status: 'Suspended' },
-              { name: 'Zara Malik', email: 'zara@threat.com', role: 'Moderator', status: 'Active' },
-              { name: 'Ali Haider', email: 'ali@threat.com', role: 'User', status: 'Active' },
-              { name: 'Fatima Noor', email: 'fatima@threat.com', role: 'User', status: 'Pending' },
-            ].map((user, i) => (
+            {(() => {
+              // Filter only customers
+              const customers = users.filter(user => user.role === 'Customer');
+              
+              // Filter based on search query
+              const filteredCustomers = customers.filter(user =>
+                user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchQuery.toLowerCase())
+              );
+
+              if (filteredCustomers.length === 0) {
+                return (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-yellow-400">
+                      {customers.length === 0 ? "No customers found. Customer list will appear here when users sign up." : "No customers match your search criteria."}
+                    </td>
+                  </tr>
+                );
+              }
+
+              return filteredCustomers.map((user, i) => {
+                return (
               <tr key={i}>
                 <td className="p-2 border border-yellow-500">{i + 1}</td>
                 <td className="p-2 border border-yellow-500">{user.name}</td>
@@ -256,24 +296,43 @@ const handleChangePassword = () => {
                   <button className="px-3 py-1 bg-yellow-500 text-black rounded hover:bg-yellow-400 text-xs font-semibold">
                     Edit
                   </button>
-                  <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-400 text-xs font-semibold">
-                    Suspend
+                  <button 
+                    onClick={() => handleSuspendUser(user.email)}
+                    className={`px-3 py-1 rounded text-xs font-semibold ${
+                      user.status === 'Suspended'
+                        ? 'bg-green-500 text-white hover:bg-green-400'
+                        : 'bg-red-500 text-white hover:bg-red-400'
+                    }`}
+                  >
+                    {user.status === 'Suspended' ? 'Activate' : 'Suspend'}
                   </button>
                 </td>
               </tr>
-            ))}
+                );
+              });
+            })()}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination Placeholder */}
-      <div className="flex justify-between items-center text-yellow-200 text-sm mb-20">
-        <span>Showing 1–5 of 1,248 users</span>
-        <div className="space-x-2">
-          <button className="px-3 py-1 bg-[#1a1a1a] border border-yellow-500 rounded hover:bg-yellow-700">Prev</button>
-          <button className="px-3 py-1 bg-yellow-500 text-black rounded hover:bg-yellow-400">Next</button>
-        </div>
-      </div>
+      {/* Pagination */}
+      {(() => {
+        const customers = users.filter(user => user.role === 'Customer');
+        const filteredCustomers = customers.filter(user =>
+          user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        
+        if (filteredCustomers.length === 0) return null;
+
+        return (
+          <div className="flex justify-between items-center text-yellow-200 text-sm mb-20">
+            <span>
+              Showing {filteredCustomers.length} {filteredCustomers.length === 1 ? 'customer' : 'customers'}
+            </span>
+          </div>
+        );
+      })()}
     </>
   );
       case 'settings':    
@@ -373,7 +432,7 @@ const handleChangePassword = () => {
         );
       case 'reports':
         return (
-          <div className="bg-black/30 border border-yellow-500 rounded-xl p-6">
+          <div className="bg-black/30 mt-40 border border-yellow-500 rounded-xl p-6">
             <h3 className="text-xl font-bold text-yellow-300 mb-4">📊 View Reports</h3>
             <p className="text-yellow-200">[Reports dashboard goes here]</p>
           </div>
@@ -466,42 +525,3 @@ function Toggle({ label, value, onChange }) {
   );
   
 }
-
-
- // Admin setting (Change password)
-    
-
-  //   if (!currentAdmin || currentAdmin.role !== 'Admin') {
-  //     setPasswordStatus('❌ No admin session found.');
-  //     return;
-  //   }
-
-  //   const match = findUser(currentAdmin.email, currentPassword);
-  //   if (!match) {
-  //     setPasswordStatus('❌ Incorrect current password.');
-  //     return;
-  //   }
-
-  //   updatePassword(currentAdmin.email, newPassword);
-  //   setPasswordStatus('✅ Password changed successfully!');
-  //   setCurrentPassword('');
-  //   setNewPassword('');
-  // };
-
-  // const handleChangePassword = () => {
-  //   if (!currentAdmin || currentAdmin.role !== 'Admin') {
-  //     setPasswordStatus('❌ No admin session found.');
-  //     return;
-  //   }
-
-  //   const match = findUser(currentAdmin.email, currentPassword);
-  //   if (!match) {
-  //     setPasswordStatus('❌ Incorrect current password.');
-  //     return;
-  //   }
-
-  //   updatePassword(currentAdmin.email, newPassword);
-  //   setPasswordStatus('✅ Password changed successfully!');
-  //   setCurrentPassword('');
-  //   setNewPassword('');
-  // };
