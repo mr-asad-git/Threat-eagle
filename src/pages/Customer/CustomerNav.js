@@ -1,18 +1,14 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getCurrentUser } from '../../data/authUsers';
+import { useAuth } from '../../context/AuthContext';
 
 export default function CustomerNav() {
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const { currentUser, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    try { localStorage.removeItem('currentUser'); } catch (e) {}
-    // Navigate to login page after logout
+    logout();
     navigate('/login');
-    // small reload to ensure header and other components update their state
-    window.location.reload();
   };
 
   return (
@@ -21,7 +17,7 @@ export default function CustomerNav() {
         <img src="/logo192.png" alt="Threat Eagle" className="w-8 h-8 rounded-full" />
         <div>
           <div className="text-yellow-400 font-extrabold">Threat Eagle</div>
-          <div className="text-xs text-yellow-200">{user ? user.email : ''}</div>
+          <div className="text-xs text-yellow-200">{currentUser ? currentUser.email : ''}</div>
         </div>
       </div>
 

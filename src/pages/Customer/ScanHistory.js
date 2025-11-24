@@ -1,25 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getCurrentUser, updateCurrentUser } from '../../data/authUsers';
 
 export default function ScanHistory() {
   const [search, setSearch] = useState('');
   const [date, setDate] = useState('');
+  const [history, setHistory] = useState([]);
+  const [user, setUser] = useState(null);
 
-  const history = [
-    { name: 'project.js', status: 'Safe', scanned: '2025-10-17', size: '12 KB' },
-    { name: 'invoice.html', status: 'Corrupted', scanned: '2025-10-16', size: '8 KB' },
-    { name: 'notes.txt', status: 'Safe', scanned: '2025-10-15', size: '4 KB' },
-  ];
+  useEffect(() => {
+    const u = getCurrentUser();
+    setUser(u);
+    setHistory(u?.scanHistory || u?.history || []);
+  }, []);
 
   const filtered = history.filter((f) => {
     const matchSearch =
       f.name.toLowerCase().includes(search.toLowerCase()) ||
-      f.status.toLowerCase().includes(search.toLowerCase());
+      (f.status || '').toLowerCase().includes(search.toLowerCase());
     const matchDate = !date || f.scanned === date;
     return matchSearch && matchDate;
   });
 
+  const removeRecord = (idx) => {
+    const next = history.filter((_, i) => i !== idx);
+    setHistory(next);
+    if (user) updateCurrentUser({ ...user, scanHistory: next });
+  };
+
   return (
-    <div className="min-h-screen pt-40 bg-black text-yellow-300 font-mono px-6 py-10">
+    <div className="min-h-screen bg-black text-yellow-300 font-mono px-6 pt-nav py-10">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 tracking-wider border-b-2 border-yellow-500 pb-2">
           📁 Scan History
@@ -58,12 +67,13 @@ export default function ScanHistory() {
                 <th className="p-2 border border-yellow-400">Size</th>
                 <th className="p-2 border border-yellow-400">Status</th>
                 <th className="p-2 border border-yellow-400">Scanned On</th>
+                <th className="p-2 border border-yellow-400">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-black/20 text-yellow-200">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center p-4 text-yellow-400">
+                  <td colSpan="6" className="text-center p-4 text-yellow-400">
                     No scan records found.
                   </td>
                 </tr>
@@ -72,13 +82,18 @@ export default function ScanHistory() {
                   <tr key={i}>
                     <td className="p-2 border border-yellow-500">{i + 1}</td>
                     <td className="p-2 border border-yellow-500">{file.name}</td>
-                    <td className="p-2 border border-yellow-500">{file.size}</td>
+                    <td className="p-2 border border-yellow-500">{file.size || '—'}</td>
                     <td className={`p-2 border border-yellow-500 ${
                       file.status === 'Corrupted' ? 'text-red-400' : 'text-green-400'
                     }`}>
                       {file.status}
                     </td>
                     <td className="p-2 border border-yellow-500">{file.scanned}</td>
+                    <td className="p-2 border border-yellow-500">
+                      <button onClick={() => removeRecord(i)} className="px-3 py-1 text-xs font-bold border border-red-500 text-red-400 rounded hover:bg-red-500 hover:text-black transition">
+                        Remove
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

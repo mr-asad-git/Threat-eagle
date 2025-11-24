@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import Header from './components/Header';
 // import GlobalNavArrows from './components/GlobalNavArrows';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -33,8 +34,9 @@ import Profile from './pages/Customer/Profile';
 
 function App() {
   return (
-    <Router>
-      <Header />
+    <AuthProvider>
+      <Router>
+        <Header />
       {/* <GlobalNavArrows /> */}
       <Routes>
         {/* Public Routes */}
@@ -76,6 +78,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute role="Admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Customer Routes */}
         <Route
@@ -111,7 +121,8 @@ function App() {
           }
         />
       </Routes>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -1,21 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getStoredUsers, saveUsers } from '../../data/userStore';
 
 export default function ManageUsers() {
   const [search, setSearch] = useState('');
-  const users = [
-    { id: 1, name: 'Alice Khan', email: 'alice@threat.com', role: 'Customer', status: 'Active' },
-    { id: 2, name: 'Bob Malik', email: 'bob@threat.com', role: 'Customer', status: 'Suspended' },
-    { id: 3, name: 'Charlie Admin', email: 'charlie@threat.com', role: 'Admin', status: 'Active' },
-  ];
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    setUsers(getStoredUsers());
+  }, []);
 
   const filteredUsers = users.filter(
     (u) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
+      u.name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleSuspend = (email) => {
+    const next = users.map((u) =>
+      u.email === email ? { ...u, status: u.status === 'Suspended' ? 'Active' : 'Suspended' } : u
+    );
+    saveUsers(next);
+    setUsers(next);
+  };
+
+  const handleDelete = (email) => {
+    if (!window.confirm('Delete this user? This action cannot be undone.')) return;
+    const next = users.filter((u) => u.email !== email);
+    saveUsers(next);
+    setUsers(next);
+  };
+
   return (
-    <div className="min-h-screen bg-black text-yellow-300 font-mono px-6 py-10">
+    <div className="min-h-screen pt-40 bg-black text-yellow-300 font-mono px-6 py-10">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 tracking-wider border-b-2 border-yellow-500 pb-2">
           👥 Manage Users
@@ -54,7 +70,7 @@ export default function ManageUsers() {
                 </tr>
               ) : (
                 filteredUsers.map((user, i) => (
-                  <tr key={user.id}>
+                  <tr key={user.email || i}>
                     <td className="p-2 border border-yellow-500">{i + 1}</td>
                     <td className="p-2 border border-yellow-500">{user.name}</td>
                     <td className="p-2 border border-yellow-500">{user.email}</td>
@@ -68,10 +84,10 @@ export default function ManageUsers() {
                       <button className="px-3 py-1 text-xs font-bold border border-yellow-400 rounded hover:bg-yellow-500 hover:text-black transition">
                         View
                       </button>
-                      <button className="px-3 py-1 text-xs font-bold border border-yellow-400 rounded hover:bg-yellow-500 hover:text-black transition">
+                      <button onClick={() => handleSuspend(user.email)} className="px-3 py-1 text-xs font-bold border border-yellow-400 rounded hover:bg-yellow-500 hover:text-black transition">
                         {user.status === 'Suspended' ? 'Activate' : 'Suspend'}
                       </button>
-                      <button className="px-3 py-1 text-xs font-bold border border-red-500 text-red-400 rounded hover:bg-red-500 hover:text-black transition">
+                      <button onClick={() => handleDelete(user.email)} className="px-3 py-1 text-xs font-bold border border-red-500 text-red-400 rounded hover:bg-red-500 hover:text-black transition">
                         Delete
                       </button>
                     </td>

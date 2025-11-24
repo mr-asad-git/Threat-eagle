@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { findUser, updatePassword, getStoredUsers, saveUsers } from '../../data/userStore';
 import { getCurrentUser } from '../../data/authUsers';
 
 export default function AdminDashboard() {
-const [activeTab, setActiveTab] = useState('dashboard');  
+  const location = useLocation();
+  // derive active tab from current admin pathname so nav links work without lifting state
+  const pathname = location.pathname || '';
+  let activeTab = 'dashboard';
+  if (pathname.startsWith('/admin/manage-users')) activeTab = 'users';
+  else if (pathname.startsWith('/admin/view-reports')) activeTab = 'reports';
+  else if (pathname.startsWith('/admin/settings')) activeTab = 'settings';
+  else if (pathname.startsWith('/admin/dashboard')) activeTab = 'dashboard';
 const [currentPassword, setCurrentPassword] = useState('');
 const [newPassword, setNewPassword] = useState('');
 const [passwordStatus, setPasswordStatus] = useState(null);
@@ -444,58 +452,8 @@ const handleChangePassword = () => {
 
   
   return (
-    <div className="flex min-h-screen bg-black text-yellow-300 font-mono">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#0a0a0a] border-r border-yellow-500 p-6 fixed h-screen">
-        <h2 className="text-2xl font-bold text-yellow-400 mb-10 tracking-wide">🛡️ Admin Panel</h2>
-        <nav className="flex flex-col space-y-4">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`text-left px-4 py-2 rounded-lg transition-all ${
-              activeTab === 'dashboard'
-                ? 'bg-yellow-500 text-black font-bold'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            🛡️ Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`text-left px-4 py-2 rounded-lg transition-all ${
-              activeTab === 'users'
-                ? 'bg-yellow-500 text-black font-bold'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            👥 Manage Users
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`text-left px-4 py-2 rounded-lg transition-all ${
-              activeTab === 'settings'
-                ? 'bg-yellow-500 text-black font-bold'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            ⚙️ Settings
-          </button>
-          <button
-            onClick={() => setActiveTab('reports')}
-            className={`text-left px-4 py-2 rounded-lg transition-all ${
-              activeTab === 'reports'
-                ? 'bg-yellow-500 text-black font-bold'
-                : 'hover:bg-yellow-700 text-yellow-300'
-            }`}
-          >
-            📊 View Reports
-          </button>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="ml-64 w-full px-6 py-10">
-        <div className="max-w-7xl mx-auto">{renderContent()}</div>
-      </main>
+    <div className="min-h-screen bg-black text-yellow-300 font-mono pt-nav">
+      <div className="max-w-7xl mx-auto px-6 py-10">{renderContent()}</div>
     </div>
   );
   

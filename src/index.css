@@ -5,6 +5,13 @@
 .bg-img{
 background-image: url('./assets/hero-background-img.jpg'); /* ✅ */
 }
+/* CSS variable for top navbar height and helper class */
+:root {
+  --nav-height: 64px; /* adjust if your navbar is taller */
+}
+.pt-nav {
+  padding-top: var(--nav-height) !important;
+}
 /* index.css */
 nav{
     box-shadow: 0 10px 20px #0ff;

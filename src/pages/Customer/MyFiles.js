@@ -1,22 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getCurrentUser, updateCurrentUser } from '../../data/authUsers';
 
 export default function MyFiles() {
   const [search, setSearch] = useState('');
+  const [files, setFiles] = useState([]);
+  const [user, setUser] = useState(null);
 
-  const files = [
-    { name: 'project.js', size: '12 KB', status: 'Safe', scanned: '2025-10-17' },
-    { name: 'invoice.html', size: '8 KB', status: 'Corrupted', scanned: '2025-10-16' },
-    { name: 'notes.txt', size: '4 KB', status: 'Safe', scanned: '2025-10-15' },
-  ];
+  useEffect(() => {
+    const u = getCurrentUser();
+    setUser(u);
+    setFiles(u?.files ? [...u.files] : []);
+  }, []);
 
   const filteredFiles = files.filter(
     (f) =>
       f.name.toLowerCase().includes(search.toLowerCase()) ||
-      f.status.toLowerCase().includes(search.toLowerCase())
+      (f.status || '').toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleDelete = (idx) => {
+    const next = files.filter((_, i) => i !== idx);
+    setFiles(next);
+    if (user) updateCurrentUser({ ...user, files: next });
+  };
+
+  const handleRescan = (idx) => {
+    const next = files.map((f, i) => (i === idx ? { ...f, status: 'Scanning...' } : f));
+    setFiles(next);
+    if (user) updateCurrentUser({ ...user, files: next });
+
+    setTimeout(() => {
+      const done = next.map((f, i) => (i === idx ? { ...f, status: 'Safe', scanned: new Date().toISOString().split('T')[0] } : f));
+      setFiles(done);
+      if (user) updateCurrentUser({ ...user, files: done });
+    }, 900);
+  };
+
   return (
-    <div className="min-h-screen pt-40 bg-black text-yellow-300 font-mono px-6 py-10">
+    <div className="min-h-screen bg-black text-yellow-300 font-mono px-6 pt-nav py-10">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 tracking-wider border-b-2 border-yellow-500 pb-2">
           📁 My Files
@@ -50,7 +71,7 @@ export default function MyFiles() {
               {filteredFiles.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="text-center p-4 text-yellow-400">
-                    No files found.
+                    You have no uploaded files yet.
                   </td>
                 </tr>
               ) : (
@@ -58,21 +79,21 @@ export default function MyFiles() {
                   <tr key={i}>
                     <td className="p-2 border border-yellow-500">{i + 1}</td>
                     <td className="p-2 border border-yellow-500">{file.name}</td>
-                    <td className="p-2 border border-yellow-500">{file.size}</td>
+                    <td className="p-2 border border-yellow-500">{file.size || '—'}</td>
                     <td className={`p-2 border border-yellow-500 ${
                       file.status === 'Corrupted' ? 'text-red-400' : 'text-green-400'
                     }`}>
                       {file.status}
                     </td>
-                    <td className="p-2 border border-yellow-500">{file.scanned}</td>
+                    <td className="p-2 border border-yellow-500">{file.scanned || '—'}</td>
                     <td className="p-2 border border-yellow-500 space-x-2">
                       <button className="px-3 py-1 text-xs font-bold border border-yellow-400 rounded hover:bg-yellow-500 hover:text-black transition">
                         View
                       </button>
-                      <button className="px-3 py-1 text-xs font-bold border border-yellow-400 rounded hover:bg-yellow-500 hover:text-black transition">
+                      <button onClick={() => handleRescan(i)} className="px-3 py-1 text-xs font-bold border border-yellow-400 rounded hover:bg-yellow-500 hover:text-black transition">
                         Re-scan
                       </button>
-                      <button className="px-3 py-1 text-xs font-bold border border-red-500 text-red-400 rounded hover:bg-red-500 hover:text-black transition">
+                      <button onClick={() => handleDelete(i)} className="px-3 py-1 text-xs font-bold border border-red-500 text-red-400 rounded hover:bg-red-500 hover:text-black transition">
                         Delete
                       </button>
                     </td>

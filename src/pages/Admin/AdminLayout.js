@@ -60,7 +60,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <main className="ml-64 w-full px-6 py-10">{children}</main>
+      <main className="ml-64 w-full px-6 pt-nav py-10">{children}</main>
     </div>
   );
 }

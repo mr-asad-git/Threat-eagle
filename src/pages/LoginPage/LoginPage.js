@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { findUser, getUserToken } from '../../data/userStore';
 import { validateUser } from '../../data/authUsers';
-import { getCurrentUser } from '../../data/authUsers';
+// removed unused getCurrentUser in login page
 
 
 import './LoginPageStyling.css';
@@ -28,47 +28,37 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resetError, setResetError] = useState('');
-  // eslint-disable-next-line
-  const [currentUser, setCurrentUser] = useState(null);
-useEffect(() => {
-  const user = getCurrentUser();
-  setCurrentUser(user);
-}, []);
+  // (removed unused currentUser state)
   
- const handleLogin = (e) => {
+  const { refresh, login } = useAuth();
+
+  const handleLogin = (e) => {
   e.preventDefault();
 
   const user = validateUser(email, password, role);
   if (user && user.role && user.role.toLowerCase() === (role || '').toLowerCase()) {
-    const token = getUserToken(user);
-    localStorage.setItem('authToken', token);
+      // validateUser already sets authToken in localStorage
+      // update context from storage (or directly set)
+      try { login(user); } catch (e) { /* ignore */ }
+      refresh();
 
-    try {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    } catch (err) {
-      // ignore storage errors
-    }
+      setShowPopup(true);
+      setError('');
 
-    setShowPopup(true);
-    setError('');
+      setTimeout(() => {
+        setShowPopup(false);
 
-    setTimeout(() => {
-      setShowPopup(false);
-
-      // ✅ Use exact route casing as defined in App.js
-      if (user.role === 'Admin') {
-        navigate('/admin/dashboard');
-      } else if (user.role === 'Customer') {
-        navigate('/customer/dashboard');
-      } else if (user.role === 'Support') {
-        navigate('/support/portal');
-      } else {
-        navigate('/');
-      }
-
-      // Optional: refresh header
-      // window.location.reload();
-    }, 2000);
+        // ✅ Use exact route casing as defined in App.js
+        if (user.role === 'Admin') {
+          navigate('/admin/dashboard');
+        } else if (user.role === 'Customer') {
+          navigate('/customer/dashboard');
+        } else if (user.role === 'Support') {
+          navigate('/support/portal');
+        } else {
+          navigate('/');
+        }
+      }, 2000);
   } else {
     setError('Invalid credentials. Please try again.');
   }

@@ -1,27 +1,16 @@
 
 
 import { Link, useLocation } from 'react-router-dom';
-import React, { useState, useEffect } from 'react';
-import { getCurrentUser } from '../data/authUsers';
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import CustomerNav from '../pages/Customer/CustomerNav';
+import AdminNav from '../pages/Admin/AdminNav';
 
 
 export default function Header() {
   const location = useLocation();
   const [showPlans, setShowPlans] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
-
-  useEffect(() => {
-    const handleStorage = () => setCurrentUser(getCurrentUser());
-    // update on storage changes (other tabs) and on mount
-    window.addEventListener('storage', handleStorage);
-    // fallback: a short timer to pick up same-tab login changes (optional)
-    const t = setInterval(() => setCurrentUser(getCurrentUser()), 800);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      clearInterval(t);
-    };
-  }, []);
+  const { currentUser } = useAuth();
 
   // Subscription plans array
   const plans = [
@@ -103,6 +92,11 @@ export default function Header() {
       </div>
     </div>
   );
+
+  // If an admin is logged in and visiting admin routes, render the admin nav
+  if (currentUser && currentUser.role === 'Admin' && location.pathname.startsWith('/admin')) {
+    return <AdminNav />;
+  }
 
   // If a customer is logged in and visiting customer routes, render the customer nav instead
   if (currentUser && currentUser.role === 'Customer' && location.pathname.startsWith('/customer')) {
