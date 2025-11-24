@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getCurrentUser } from '../../data/authUsers';
-import CustomerFiles from './MyFiles';
-import ScanHistory from './ScanHistory';
-import CustomerProfile from './Profile';
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -13,21 +14,44 @@ export default function CustomerDashboard() {
     setCurrentUser(user);
   }, []);
 
-  // Dummy stats
-  const stats = { scanned: 42, safe: 38, corrupted: 4 };
-
-  // Dummy invoices data
-  const invoices = [
-    { month: 'Jan', uploaded: 12, safe: 10, corrupted: 2 },
-    { month: 'Feb', uploaded: 18, safe: 16, corrupted: 2 },
-    { month: 'Mar', uploaded: 25, safe: 22, corrupted: 3 },
+  // Dummy data for file progress
+  const fileProgressData = [
+    { month: 'Jan', uploaded: 12, scanned: 10, completed: 8 },
+    { month: 'Feb', uploaded: 18, scanned: 15, completed: 14 },
+    { month: 'Mar', uploaded: 25, scanned: 22, completed: 20 },
+    { month: 'Apr', uploaded: 20, scanned: 18, completed: 17 },
+    { month: 'May', uploaded: 30, scanned: 27, completed: 25 },
   ];
 
-  // Dummy activity feed
-  const activities = [
-    { id: 1, message: 'Uploaded invoice "invoice-Jan.pdf"', time: 'Today' },
-    { id: 2, message: 'Scanned file "report-Feb.js" – Safe ✅', time: 'Yesterday' },
-    { id: 3, message: 'Profile updated successfully', time: '2 days ago' },
+  // Dummy data for threats
+  const threatData = [
+    { name: 'Safe Files', value: 85 },
+    { name: 'Moderate Threats', value: 10 },
+    { name: 'High Threats', value: 5 },
+  ];
+  const COLORS = ['#22c55e', '#facc15', '#ef4444'];
+
+  // Dummy user interactions
+  const interactions = [
+    { id: 1, user: 'alice@threat.com', action: 'Shared file "report.pdf"', time: 'Today' },
+    { id: 2, user: 'bob@threat.com', action: 'Commented on "invoice.html"', time: 'Yesterday' },
+    { id: 3, user: 'charlie@threat.com', action: 'Downloaded "project.js"', time: '2 days ago' },
+  ];
+
+  // Dummy meetings
+  const meetings = [
+    { id: 1, title: 'Security Briefing', date: '2025-11-20', time: '10:00 AM' },
+    { id: 2, title: 'Customer Collaboration', date: '2025-11-22', time: '2:00 PM' },
+    { id: 3, title: 'Threat Analysis Workshop', date: '2025-11-23', time: '4:00 PM' },
+  ];
+
+  // Dummy trending risks data
+  const trendingRisks = [
+    { month: 'Jan', phishing: 40, malware: 25, ransomware: 15 },
+    { month: 'Feb', phishing: 50, malware: 30, ransomware: 20 },
+    { month: 'Mar', phishing: 60, malware: 35, ransomware: 25 },
+    { month: 'Apr', phishing: 55, malware: 40, ransomware: 30 },
+    { month: 'May', phishing: 70, malware: 45, ransomware: 35 },
   ];
 
   const renderContent = () => {
@@ -35,59 +59,103 @@ export default function CustomerDashboard() {
       case 'dashboard':
         return (
           <div className="p-6">
+            {/* Greeting */}
             <h1 className="text-3xl font-bold text-yellow-400 mb-6 border-b border-yellow-500 pb-2">
-              🧑‍💻 Dashboard Overview
+              🧑‍💻 Welcome Back, {currentUser?.name || 'Customer'}
             </h1>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-black/40 border border-yellow-500 rounded-lg p-6 text-center">
-                <h2 className="text-lg font-semibold text-yellow-300">Files Scanned</h2>
-                <p className="text-3xl font-bold text-yellow-400 mt-2">{stats.scanned}</p>
+            {/* Graphs Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+              {/* File Progress Graph */}
+              <div className="bg-black/30 border border-yellow-500 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-yellow-300 mb-4">📊 File Progress</h3>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={fileProgressData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                    <XAxis dataKey="month" stroke="#facc15" />
+                    <YAxis stroke="#facc15" />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="uploaded" stroke="#facc15" strokeWidth={2} />
+                    <Line type="monotone" dataKey="scanned" stroke="#22c55e" strokeWidth={2} />
+                    <Line type="monotone" dataKey="completed" stroke="#3b82f6" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-              <div className="bg-black/40 border border-green-500 rounded-lg p-6 text-center">
-                <h2 className="text-lg font-semibold text-green-300">Safe Files</h2>
-                <p className="text-3xl font-bold text-green-400 mt-2">{stats.safe}</p>
-              </div>
-              <div className="bg-black/40 border border-red-500 rounded-lg p-6 text-center">
-                <h2 className="text-lg font-semibold text-red-300">Corrupted Files</h2>
-                <p className="text-3xl font-bold text-red-400 mt-2">{stats.corrupted}</p>
+
+              {/* Threats Graph */}
+              <div className="bg-black/30 border border-yellow-500 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-yellow-300 mb-4">⚠️ Threats Overview</h3>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={threatData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {threatData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Invoices */}
+            {/* User Interactions */}
             <div className="bg-black/30 border border-yellow-500 rounded-xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-yellow-300 mb-4">📊 Invoices Uploaded</h3>
+              <h3 className="text-xl font-bold text-yellow-300 mb-6">🤝 User Interactions & File Sharing</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {interactions.map((int) => (
+                  <div
+                    key={int.id}
+                    className="bg-black/50 border border-yellow-500 rounded-lg p-4 shadow-md hover:bg-black/70 transition"
+                  >
+                    <p className="text-yellow-300 font-semibold mb-2">{int.user}</p>
+                    <p className="text-yellow-200">{int.action}</p>
+                    <p className="text-xs text-yellow-400 mt-2">{int.time}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Meetings */}
+            <div className="bg-black/30 border border-yellow-500 rounded-xl p-6 mb-8">
+              <h3 className="text-xl font-bold text-yellow-300 mb-4">📅 Meetings</h3>
               <ul className="space-y-2 text-yellow-200">
-                {invoices.map((inv, i) => (
-                  <li key={i} className="flex justify-between border-b border-yellow-500 pb-1">
-                    <span>{inv.month}</span>
-                    <span>Uploaded: {inv.uploaded} | Safe: {inv.safe} | Corrupted: {inv.corrupted}</span>
+                {meetings.map((meet) => (
+                  <li key={meet.id} className="border-b border-yellow-500 pb-2">
+                    <span className="block font-semibold">{meet.title}</span>
+                    <span className="text-xs text-yellow-400">{meet.date} at {meet.time}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Activity */}
+            {/* Trending Risks Graph */}
             <div className="bg-black/30 border border-yellow-500 rounded-xl p-6">
-              <h3 className="text-xl font-bold text-yellow-300 mb-4">📌 Recent Activity</h3>
-              <ul className="space-y-2 text-yellow-200">
-                {activities.map((act) => (
-                  <li key={act.id} className="border-b border-yellow-500 pb-2">
-                    <span className="block">{act.message}</span>
-                    <span className="text-xs text-yellow-400">{act.time}</span>
-                  </li>
-                ))}
-              </ul>
+              <h3 className="text-xl font-bold text-yellow-300 mb-4">🌐 Trending Cyber Risks</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={trendingRisks}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                  <XAxis dataKey="month" stroke="#facc15" />
+                  <YAxis stroke="#facc15" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="phishing" fill="#facc15" />
+                  <Bar dataKey="malware" fill="#22c55e" />
+                  <Bar dataKey="ransomware" fill="#ef4444" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         );
-      case 'files':
-        return <CustomerFiles />;
-      case 'scan':
-        return <ScanHistory />;
-      case 'profile':
-        return <CustomerProfile />;
       default:
         return <div className="p-6">⚠️ Unknown Tab</div>;
     }
@@ -96,24 +164,12 @@ export default function CustomerDashboard() {
   return (
     <div className="min-h-screen bg-black text-yellow-300 font-mono">
       {/* Tab Navigation */}
-      <div className="flex justify-center space-x-4 border-b border-yellow-500 bg-black/50 py-4">
-        {['dashboard', 'files', 'scan', 'profile'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2 rounded-lg font-semibold transition ${
-              activeTab === tab
-                ? 'bg-yellow-500 text-black'
-                : 'text-yellow-300 hover:bg-yellow-700 hover:text-black'
-            }`}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
+            <div className="flex justify-center space-x-4 border-b border-yellow-500 bg-black/50 py-4">
+           </div>
 
       {/* Main Content */}
       <main className="w-full mt-10">{renderContent()}</main>
     </div>
   );
 }
+      
